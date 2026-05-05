@@ -141,7 +141,7 @@ export async function envoyerEmailsCommande(cmd: CommandeEmailData): Promise<{
   // Après — mets ta vraie clé :
   const resend = new Resend(process.env.RESEND_API_KEY ?? "re_ACXqtCPG_3mNow2dWddVvjUb4DAc71Dqe");
   // Après :
-  const adminEmail = process.env.ADMIN_EMAIL ?? "kougnimag@gmail.com";
+  const adminEmail = process.env.ADMIN_EMAIL ?? "[EMAIL_ADDRESS]";
   let adminSent = false;
   let clientSent = false;
 
