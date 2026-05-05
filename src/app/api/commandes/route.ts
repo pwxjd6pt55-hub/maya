@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { envoyerEmailsCommande } from "@/lib/email";
@@ -162,7 +163,7 @@ export async function POST(request: NextRequest) {
 
     } catch (error: any) {
       console.error("Erreur création commande (DB):", error);
-      
+
       // MODE SECOURS : Même si la DB échoue, on envoie quand même l'email !
       const tempRef = `MB-TEMP-${Date.now().toString(36).toUpperCase()}`;
       declencherEnvoiEmails(tempRef);
