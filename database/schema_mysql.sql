@@ -2,8 +2,8 @@
 -- MAYA BAR À SENTEURS — Schéma MySQL complet
 -- ============================================
 
-CREATE DATABASE IF NOT EXISTS maya_bar CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE maya_bar;
+-- Bases de données gérées par Railway
+
 
 -- ── TABLE ESSENCES ──────────────────────────────
 CREATE TABLE IF NOT EXISTS essences (
