@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { envoyerEmailsCommande } from "@/lib/email";
 
 // GET /api/test-email  →  envoie un email de test à l'admin
+export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   const testData = {
     id: "TEST-001",
