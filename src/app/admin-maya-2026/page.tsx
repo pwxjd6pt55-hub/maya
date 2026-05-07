@@ -247,7 +247,7 @@ export default function AdminMayaPage() {
                     <h3 className="text-[10px] tracking-[0.4em] uppercase text-rose/60 mb-8">Photo du Parfum</h3>
                     <div className="aspect-square bg-rose/5 border-2 border-dashed border-rose/20 flex flex-col items-center justify-center relative group cursor-pointer hover:bg-rose/10 transition-all overflow-hidden">
                        {newParfum.image_url ? (
-                         <img src={newParfum.image_url} className="w-full h-full object-contain p-10" />
+                         <img src={newParfum.image_url} alt="Aperçu parfum" className="w-full h-full object-contain p-10" />
                        ) : (
                          <>
                            <div className="text-4xl text-rose/30 mb-4">📸</div>
@@ -269,7 +269,7 @@ export default function AdminMayaPage() {
                        </div>
                     </div>
                     <p className="text-[9px] text-rose/20 mt-4 italic leading-relaxed">
-                      Prenez la photo directement depuis votre téléphone ou importez depuis la galerie. L'image sera automatiquement optimisée.
+                      Prenez la photo directement depuis votre téléphone ou importez depuis la galerie. L&apos;image sera automatiquement optimisée.
                     </p>
                  </div>
 
@@ -368,7 +368,7 @@ export default function AdminMayaPage() {
                        <div className="flex items-center gap-6">
                           <div className="w-12 h-12 rounded-full border border-rose/10 flex items-center justify-center overflow-hidden bg-rose/5">
                              {e.image_url ? (
-                               <img src={e.image_url} className="w-full h-full object-cover" />
+                               <img src={e.image_url} alt={e.nom} className="w-full h-full object-cover" />
                              ) : (
                                <div className="w-6 h-6 rounded-full" style={{ background: e.couleur }} />
                              )}

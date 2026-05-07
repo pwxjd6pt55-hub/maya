@@ -238,7 +238,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
              <motion.div {...fadeInUp} className="relative">
                 <div className="aspect-[4/5] border border-rose/10 overflow-hidden relative group p-10 bg-[#0D0800]">
-                   <img src="https://images.unsplash.com/photo-1592914610354-fd354ea45e48?auto=format&fit=crop&q=80" className="w-full h-full object-cover opacity-40 grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-1000" />
+                   <img src="https://images.unsplash.com/photo-1592914610354-fd354ea45e48?auto=format&fit=crop&q=80" alt="Atelier" className="w-full h-full object-cover opacity-40 grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-1000" />
                    <div className="absolute inset-0 bg-gradient-to-t from-[#0D0800] via-transparent to-transparent" />
                 </div>
                 <div className="absolute -bottom-10 -left-10 w-48 h-48 border border-rose/10 bg-[#0D0800] p-6 hidden md:flex items-center justify-center">
