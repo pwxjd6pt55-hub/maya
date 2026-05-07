@@ -5,14 +5,15 @@
 @tailwind utilities;
 
 :root {
-  --gold: #C9A84C;
-  --gold-light: #E8C97A;
-  --gold-dark: #8B6914;
+  --rose: #BC7C7C;
+  --rose-light: #E29587;
+  --rose-dark: #8B5E5E;
   --cream: #F7F1E8;
-  --deep-brown: #0D0800; /* Plus sombre pour plus de luxe */
+  --deep-brown: #0D0800;
   --warm-brown: #1A0F00;
+  --maya-brown: #3D2B1F;
   --glass: rgba(255, 255, 255, 0.03);
-  --border: rgba(201, 168, 76, 0.2);
+  --border: rgba(188, 124, 124, 0.2);
 }
 
 * {
@@ -49,11 +50,11 @@ body::before {
 /* Scrollbar */
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: var(--deep-brown); }
-::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 10px; }
+::-webkit-scrollbar-thumb { background: var(--rose-dark); border-radius: 10px; }
 
 /* Gold gradient text */
 .text-gold-gradient {
-  background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 50%, var(--gold-dark) 100%);
+  background: linear-gradient(135deg, var(--rose-light) 0%, var(--rose) 50%, var(--rose-dark) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -61,8 +62,8 @@ body::before {
 
 /* Luxury button */
 .btn-gold {
-  background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark));
-  color: var(--deep-brown);
+  background: linear-gradient(135deg, var(--rose-light), var(--rose), var(--rose-dark));
+  color: white;
   font-family: 'Jost', sans-serif;
   font-weight: 600;
   letter-spacing: 0.2em;
@@ -88,7 +89,7 @@ body::before {
 
 .btn-gold:hover::before { left: 100%; }
 .btn-gold:hover { 
-  box-shadow: 0 10px 30px rgba(201, 168, 76, 0.3); 
+  box-shadow: 0 10px 30px rgba(188, 124, 124, 0.3); 
   transform: translateY(-2px) scale(1.02);
 }
 
@@ -100,7 +101,7 @@ body::before {
   transition: all 0.4s ease;
 }
 .glass-card:hover {
-  border-color: rgba(201, 168, 76, 0.4);
+  border-color: rgba(188, 124, 124, 0.4);
   background: rgba(255, 255, 255, 0.05);
 }
 
