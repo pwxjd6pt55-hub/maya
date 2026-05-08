@@ -47,14 +47,16 @@ export default function CheckoutElite() {
     setLoading(true)
     
     try {
-      const res = await fetch('/api/commandes', {
+      const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          items: cart,
-          prix_total: total,
-          ...formData,
-          mode_livraison: deliveryMethod
+          client_nom: formData.nom,
+          client_email: formData.email,
+          client_telephone: formData.telephone,
+          retrait: deliveryMethod === 'retrait' ? 'OUI' : 'NON',
+          adresse: formData.adresse,
+          date_souhaitee: new Date().toISOString()
         })
       })
       const data = await res.json()
