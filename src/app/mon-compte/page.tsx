@@ -182,7 +182,7 @@ export default function AccountElite() {
                         {order.mode_commande === 'catalogue' ? 'Catalogue' : 'Sur mesure'}
                       </p>
                       {order.gravure && (
-                        <p className="text-[11px] italic text-white/40 mt-1">✍️ "{order.gravure}"</p>
+                        <p className="text-[11px] italic text-white/40 mt-1">✍️ &quot;{order.gravure}&quot;</p>
                       )}
                     </div>
 
@@ -239,7 +239,7 @@ export default function AccountElite() {
                           {item.ml}ml · {item.item_type?.replace('_', ' ')}
                         </div>
                         {item.gravure && (
-                          <div className="text-[10px] italic text-white/30 mt-0.5">✍️ "{item.gravure}"</div>
+                          <div className="text-[10px] italic text-white/30 mt-0.5">✍️ &quot;{item.gravure}&quot;</div>
                         )}
                       </div>
                       <div className="text-right shrink-0">
