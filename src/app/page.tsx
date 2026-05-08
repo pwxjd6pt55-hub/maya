@@ -161,7 +161,7 @@ export default function MayaHome() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1, duration: 1 }}
-            className="flex flex-col gap-4 justify-center items-center"
+            className="flex flex-col gap-8 sm:gap-10 justify-center items-center mt-10"
            >
              <Link href="/configurateur" className="w-full max-w-xs sm:max-w-sm">
                <button className="btn-gold w-full py-4 sm:py-6 text-[10px] sm:text-[11px]">DÉMARRER VOTRE CRÉATION</button>
@@ -172,14 +172,14 @@ export default function MayaHome() {
            </motion.div>
         </div>
 
-        {/* Scroll Indicator */}
+        {/* Scroll Indicator - Hidden on small screens to avoid overlap */}
         <motion.div 
           animate={{ y: [0, 10, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 opacity-40"
+          className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 hidden xs:flex flex-col items-center gap-3 opacity-40"
         >
-           <span className="text-[11px] uppercase tracking-[0.5em] font-bold">Découvrir</span>
-           <div className="w-[1px] h-10 bg-white" />
+           <span className="text-[9px] sm:text-[11px] uppercase tracking-[0.5em] font-bold">Découvrir</span>
+           <div className="w-[1px] h-6 sm:h-10 bg-white" />
         </motion.div>
       </section>
 
