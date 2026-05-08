@@ -6,7 +6,7 @@ const connectionString = process.env.DATABASE_URL || `postgresql://${process.env
 
 const pool = new Pool({
   connectionString,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: connectionString.includes('localhost') ? false : { rejectUnauthorized: false }
 });
 
 export default pool;

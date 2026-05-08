@@ -24,26 +24,36 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const session = await getSession()
+  console.log('--- POST CART : Session reçue ---', session ? 'OUI' : 'NON');
+
   if (!session || !session.userId) {
+    console.warn('--- POST CART : Non authentifié ---');
     return NextResponse.json({ authenticated: false }, { status: 401 })
   }
 
   try {
     const body = await request.json()
+    console.log('--- POST CART : Body reçu ---', body.item_type);
+    
     let { item_type, parfum_catalogue_id, nom_personnalise, ml, prix, quantite, gravure, couleur, essences_json, parfums_json } = body
     if (item_type === 'melange') item_type = 'melange_essences'
 
     // 1. Get or Create Cart
+    console.log('--- POST CART : Recherche du panier pour user ---', session.userId);
     let { rows: panier } = await pool.query('SELECT id FROM panier WHERE user_id = $1', [session.userId])
     let panierId: number
+    
     if (panier.length === 0) {
+      console.log('--- POST CART : Création d''un nouveau panier ---');
       const res = await pool.query('INSERT INTO panier (user_id) VALUES ($1) RETURNING id', [session.userId])
       panierId = res.rows[0].id
     } else {
       panierId = panier[0].id
     }
+    console.log('--- POST CART : Panier ID ---', panierId);
 
     // 2. Add Item
+    console.log('--- POST CART : Insertion de l''item ---');
     await pool.query(`
       INSERT INTO panier_items 
         (panier_id, item_type, parfum_catalogue_id, nom_personnalise, ml, prix, quantite, gravure, couleur, essences_json, parfums_json)
@@ -55,10 +65,11 @@ export async function POST(request: NextRequest) {
       parfums_json ? JSON.stringify(parfums_json) : null
     ])
 
+    console.log('--- POST CART : Succès ! ---');
     return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Cart POST error:', error)
-    return NextResponse.json({ success: false, error: 'Erreur serveur' }, { status: 500 })
+  } catch (error: any) {
+    console.error('--- POST CART ERROR ---', error.message);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }
 

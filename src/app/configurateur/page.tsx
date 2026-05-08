@@ -118,14 +118,21 @@ export default function ConfiguratorElite() {
         body: JSON.stringify(body)
       })
       const data = await res.json()
+      console.log('--- CART RESPONSE ---', data);
+      
       if (data.success) {
         updateCartCount()
         setShowToast(true)
         setTimeout(() => setShowToast(false), 3000)
       } else if (data.authenticated === false) {
         window.location.href = '/connexion'
+      } else {
+        alert('Erreur : ' + (data.error || 'Impossible d''ajouter au panier'))
       }
-    } catch (e) { console.error(e) }
+    } catch (e: any) { 
+      console.error(e)
+      alert('Erreur réseau ou serveur : ' + e.message)
+    }
     setAdding(false)
   }
 
