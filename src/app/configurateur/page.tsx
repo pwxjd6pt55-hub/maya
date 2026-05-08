@@ -1,685 +1,361 @@
 'use client'
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import Link from 'next/link'
 
-// ─── Types ───────────────────────────────────────
-interface Essence {
-  id: number
-  nom: string
-  famille: string
-  note: string
-  couleur: string
-  description: string
-  image_url?: string
+// ─── Animations ──────────────────────────────────────────────────────────────
+const slideUp = {
+  initial: { opacity: 0, y: 30 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -30 },
+  transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
 }
 
-interface Parfum {
-  id: number
-  nom: string
-  marque_inspiree: string
-  famille: string
-  prix_30ml: number
-  prix_50ml: number
-  prix_100ml: number
-  notes_tete: string
-  notes_coeur: string
-  notes_fond: string
-  image_url?: string
-}
-
-const FAMILLES = ['Tous', 'Floral', 'Agrumes', 'Boisé', 'Oriental', 'Gourmand', 'Musqué', 'Frais', 'Épicé']
-const ML_OPTIONS = [
-  { val: 30, label: '30 ml', prix_base: 8000 },
-  { val: 50, label: '50 ml', prix_base: 12000 },
-  { val: 100, label: '100 ml', prix_base: 18000 },
-]
-
-// ─── Animations ───
-const stepVariants = {
-  initial: { opacity: 0, x: 20 },
-  animate: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: -20 },
-  transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] }
-}
-
-const cardVariants = {
-  hover: { y: -5, borderColor: 'var(--rose)', boxShadow: '0 10px 30px rgba(188, 124, 124, 0.15)' },
-  tap: { scale: 0.98 }
-}
-
-export default function Configurateur() {
-  const router = useRouter()
-  const [mode, setMode] = useState<'catalogue' | 'melange_essences' | 'melange_parfums'>('catalogue')
-  const [essences, setEssences] = useState<Essence[]>([])
-  const [parfums, setParfums] = useState<Parfum[]>([])
-  const [loading, setLoading] = useState(true)
-
-  // Selection states
-  const [parfumSelectionne, setParfumSelectionne] = useState<Parfum | null>(null)
-  const [essencesChoisies, setEssencesChoisies] = useState<Essence[]>([])
-  const [parfumsChoisis, setParfumsChoisis] = useState<Parfum[]>([])
-
-  // Filters
-  const [filtreRecherche, setFiltreRecherche] = useState('')
-  const [filtreFamille, setFiltreFamille] = useState('Tous')
-  const [filtreFamilleEss, setFiltreFamilleEss] = useState('Tous')
-
-  // Common
+export default function ConfiguratorElite() {
+  const [step, setStep] = useState(1)
+  const [mode, setMode] = useState<'custom' | 'mix' | 'quiz'>('custom')
+  const [essences, setEssences] = useState<any[]>([])
+  const [parfums, setParfums] = useState<any[]>([])
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([])
+  
+  // Selection state
+  const [selectedEssences, setSelectedEssences] = useState<any[]>([])
+  const [selectedMix, setSelectedMix] = useState<any[]>([])
   const [ml, setMl] = useState(50)
-  const [couleur, setCouleur] = useState('#BC7C7C')
   const [gravure, setGravure] = useState('')
-  const [retrait, setRetrait] = useState<'boutique' | 'livraison'>('boutique')
-  const [nomClient, setNomClient] = useState('')
-  const [telClient, setTelClient] = useState('')
-  const [emailClient, setEmailClient] = useState('')
-  const [dateSouhaitee, setDateSouhaitee] = useState('')
-  const [etape, setEtape] = useState<'quiz' | 'choix' | 'personalisation' | 'coordonnees' | 'confirmation'>('quiz')
-  const [submitting, setSubmitting] = useState(false)
-  const [commandeRef, setCommandeRef] = useState('')
-  const [user, setUser] = useState<any>(null)
+  const [couleur, setCouleur] = useState('#BC7C7C')
 
-  // Quiz
-  const [quizStep, setQuizStep] = useState(0)
-  const [reponsesQuiz, setReponsesQuiz] = useState<string[]>([])
-  const [recommandation, setRecommandation] = useState<string | null>(null)
-  const [questionsQuiz, setQuestionsQuiz] = useState<any[]>([])
-  const [loadingQuiz, setLoadingQuiz] = useState(true)
+  // Quiz State
+  const [currentQuizIndex, setCurrentQuizIndex] = useState(0)
+  const [quizAnswers, setQuizAnswers] = useState<any[]>([])
+  const [quizRecommendation, setQuizRecommendation] = useState<any>(null)
+
+  // Cart & UI State
+  const [cartCount, setCartCount] = useState(0)
+  const [adding, setAdding] = useState(false)
+  const [showToast, setShowToast] = useState(false)
 
   useEffect(() => {
-    fetch('/api/auth').then(r => r.json()).then(data => {
-      if (data.authenticated) {
-        setUser(data.user)
-        setNomClient(data.user.nom || '')
-        setEmailClient(data.user.email || '')
-      }
-    })
-    fetch('/api/quiz').then(r => r.json()).then(data => {
-      if (data.success) setQuestionsQuiz(data.data)
-      setLoadingQuiz(false)
-    }).catch(() => setLoadingQuiz(false))
-
-    Promise.all([
-      fetch('/api/essences').then(r => r.json()),
-      fetch('/api/parfums').then(r => r.json()),
-    ]).then(([essData, parData]) => {
-      if (essData.success) setEssences(essData.data)
-      if (parData.success) setParfums(parData.data)
-      setLoading(false)
-    }).catch(() => setLoading(false))
-    // Check for direct checkout
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('step') === 'final') {
-      setEtape('coordonnees');
-    }
+    fetch('/api/essences').then(r => r.json()).then(d => d.success && setEssences(d.data))
+    fetch('/api/parfums').then(r => r.json()).then(d => d.success && setParfums(d.data))
+    fetch('/api/quiz').then(r => r.json()).then(d => d.success && setQuizQuestions(d.data))
+    updateCartCount()
   }, [])
 
-  const logout = async () => {
-    await fetch('/api/auth', { method: 'DELETE' })
-    setUser(null)
-    router.push('/')
+  const updateCartCount = () => {
+    fetch('/api/cart').then(r => r.json()).then(d => {
+      if (d.success) setCartCount(d.items.length)
+    }).catch(() => {})
   }
 
-  const finaliserQuiz = (reponses: string[]) => {
-    const counts: any = {}
-    reponses.forEach(r => counts[r] = (counts[r] || 0) + 1)
-    const gagnant = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b)
-    setRecommandation(`Nous vous conseillons les notes : ${gagnant}`)
-    setFiltreFamille(gagnant)
-    setFiltreFamilleEss(gagnant)
-    setQuizStep(questionsQuiz.length)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+  const handleNext = () => setStep(s => s + 1)
+  const handleBack = () => {
+    if (mode === 'quiz' && step === 2) {
+       setStep(1)
+       setCurrentQuizIndex(0)
+    } else {
+       setStep(s => s - 1)
+    }
   }
 
-  // ─── Computed ───
-  const parfumsFiltres = parfums.filter(p => {
-    const matchRecherche = (p.nom || '').toLowerCase().includes(filtreRecherche.toLowerCase()) ||
-      (p.marque_inspiree || '').toLowerCase().includes(filtreRecherche.toLowerCase())
-    const matchFamille = filtreFamille === 'Tous' || (p.famille || '').includes(filtreFamille)
-    return matchRecherche && matchFamille
-  })
-
-  const essencesFiltrees = essences.filter(e =>
-    filtreFamilleEss === 'Tous' || e.famille === filtreFamilleEss
-  )
-
-  const prixActuel = () => {
-    if (mode === 'catalogue' && parfumSelectionne) {
-      return ml === 30 ? parfumSelectionne.prix_30ml : ml === 50 ? parfumSelectionne.prix_50ml : parfumSelectionne.prix_100ml
+  const toggleEssence = (e: any) => {
+    if (selectedEssences.find(x => x.id === e.id)) {
+      setSelectedEssences(selectedEssences.filter(x => x.id !== e.id))
+    } else if (selectedEssences.length < 3) {
+      setSelectedEssences([...selectedEssences, e])
     }
-    if (mode === 'melange_parfums' && parfumsChoisis.length > 0) {
-      // Prix moyen des parfums choisis + 10% pour le mélange
-      const sum = parfumsChoisis.reduce((acc, p) => acc + (ml === 30 ? p.prix_30ml : ml === 50 ? p.prix_50ml : p.prix_100ml), 0)
-      return Math.round((sum / parfumsChoisis.length) * 1.1)
-    }
-    return ML_OPTIONS.find(o => o.val === ml)?.prix_base || 12000
   }
 
-  const peutContinuer = () => {
-    if (etape === 'choix') {
-      if (mode === 'catalogue') return parfumSelectionne !== null
-      if (mode === 'melange_essences') return essencesChoisies.length >= 2
-      if (mode === 'melange_parfums') return parfumsChoisis.length >= 2
+  const toggleMix = (p: any) => {
+    if (selectedMix.find(x => x.id === p.id)) {
+      setSelectedMix(selectedMix.filter(x => x.id !== p.id))
+    } else if (selectedMix.length < 2) {
+      setSelectedMix([...selectedMix, p])
     }
-    return true
   }
 
-  // ─── Cart Integration ───
-  const ajouterAuPanier = async () => {
-    if (!user) {
-      router.push('/connexion?redirect=/configurateur')
-      return
+  // Helper: safely parse quiz options regardless of DB format
+  const parseOptions = (options: any): any[] => {
+    if (Array.isArray(options)) return options
+    if (typeof options === 'string') {
+      try { return JSON.parse(options) } catch { return [] }
     }
-    setSubmitting(true)
-    const payload = {
-      item_type: mode,
-      parfum_catalogue_id: mode === 'catalogue' ? parfumSelectionne?.id : null,
-      nom_personnalise: mode === 'melange_essences' ? 'Mon Mélange d\'Essences' : mode === 'melange_parfums' ? 'Mon Mix de Parfums' : null,
+    return []
+  }
+
+  const handleQuizAnswer = (option: any) => {
+    const newAnswers = [...quizAnswers, option]
+    setQuizAnswers(newAnswers)
+    
+    if (currentQuizIndex < quizQuestions.length - 1) {
+      setCurrentQuizIndex(currentQuizIndex + 1)
+    } else {
+      // valeur contains the olfactory family (Floral, Boisé, etc.)
+      const recommendedCategory = option.valeur || option.category || 'Floral'
+      setQuizRecommendation(recommendedCategory)
+      handleNext()
+    }
+  }
+
+  const addToCart = async () => {
+    setAdding(true)
+    const prix = ml === 30 ? 9500 : ml === 50 ? 14000 : 22000
+    const body = {
+      item_type: mode === 'custom' ? 'melange_essences' : 'melange_parfums',
+      nom_personnalise: mode === 'custom' ? 'Création Personnalisée' : 'Mélange de Parfums',
       ml,
-      prix: prixActuel(),
-      quantite: 1,
+      prix,
       gravure,
       couleur,
-      essences_json: mode === 'melange_essences' ? essencesChoisies.map(e => ({ id: e.id, nom: e.nom })) : null,
-      parfums_json: mode === 'melange_parfums' ? parfumsChoisis.map(p => ({ id: p.id, nom: p.nom })) : null
+      essences_json: mode === 'custom' ? selectedEssences.map(e => ({ id: e.id, nom: e.nom })) : null,
+      parfums_json: mode === 'mix' ? selectedMix.map(p => ({ id: p.id, nom: p.nom })) : null
     }
 
-    const res = await fetch('/api/cart', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-    
-    if (res.ok) {
-      alert('Produit ajouté au panier !')
-      router.push('/mon-compte') // Ou vers une page panier dédiée
-    } else {
-      alert('Erreur lors de l\'ajout au panier')
-    }
-    setSubmitting(false)
+    try {
+      const res = await fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      const data = await res.json()
+      if (data.success) {
+        updateCartCount()
+        setShowToast(true)
+        setTimeout(() => setShowToast(false), 3000)
+      } else if (data.authenticated === false) {
+        window.location.href = '/connexion'
+      }
+    } catch (e) { console.error(e) }
+    setAdding(false)
   }
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#0D0800] text-rose animate-pulse">Chargement...</div>
-
   return (
-    <main className="min-h-screen bg-[#0D0800] text-cream pb-20 selection:bg-rose/30">
+    <div className="min-h-screen bg-[#0D0800] text-[#F9F5F2] font-body flex flex-col selection:bg-rose/40">
       
-      {/* ── HEADER ── */}
-      <header className="sticky top-0 z-50 bg-[#0D0800]/80 backdrop-blur-xl border-b border-rose/10 px-8 py-5 flex items-center justify-between">
-        <Link href="/" className="font-display text-2xl text-rose no-underline">
-          MAYA BAR <span className="opacity-40 font-light text-sm tracking-widest ml-2">CONFIGURATEUR</span>
+      {/* ── HEADER NAVIGATION ── */}
+      <nav className="p-10 flex justify-between items-center border-b border-white/5 bg-[#0D0800]/80 backdrop-blur-md sticky top-0 z-[100]">
+        <Link href="/" className="font-display text-2xl tracking-tighter hover:text-rose transition-colors">
+          MAYA <span className="italic font-light opacity-30">BAR</span>
         </Link>
-
-        <div className="flex items-center gap-6">
-          {user ? (
-            <div className="flex items-center gap-6">
-               <Link href="/mon-compte" className="text-[10px] uppercase tracking-widest text-rose hover:text-rose-light transition-colors">Panier & Compte</Link>
-               <button onClick={logout} className="text-[10px] uppercase tracking-widest text-rose/40 hover:text-rose border-l border-rose/10 pl-6">Déconnexion</button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-6">
-               <Link href="/connexion" className="text-[10px] uppercase tracking-widest text-rose/60 hover:text-rose transition-colors">Connexion</Link>
-               <Link href="/inscription" className="btn-gold px-6 py-2.5 text-[9px]">S&apos;inscrire</Link>
-            </div>
-          )}
-        </div>
-        
-        {/* Progress Tracker */}
-        <div className="hidden lg:flex items-center gap-8">
-          {(['choix', 'personalisation', 'coordonnees'] as const).map((s, i) => {
-            const active = etape === s
-            const past = ['confirmation', 'coordonnees', 'personalisation'].slice(0, ['choix','personalisation','coordonnees'].indexOf(etape)).includes(s)
-            return (
-              <div key={s} className="flex items-center gap-4">
-                <div className={`w-8 h-8 rounded-full border flex items-center justify-center text-[10px] font-bold transition-all ${active ? 'bg-rose border-rose text-white scale-110' : past ? 'border-rose text-rose bg-rose/10' : 'border-rose/20 text-rose/20'}`}>
-                  {past ? '✓' : i + 1}
-                </div>
-                <span className={`text-[10px] uppercase tracking-[0.2em] ${active ? 'text-rose' : 'text-rose/20'}`}>{s}</span>
-                {i < 2 && <div className="w-8 h-px bg-rose/10" />}
+        <div className="flex gap-8 items-center">
+          <div className="hidden md:flex gap-4 items-center">
+            {[1, 2, 3, 4].map(s => (
+              <div key={s} className="flex items-center gap-2">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-bold border transition-all ${step >= s ? 'bg-rose border-rose text-white' : 'border-white/10 text-white/20'}`}>{s}</div>
+                {s < 4 && <div className={`w-8 h-[1px] ${step > s ? 'bg-rose' : 'bg-white/10'}`} />}
               </div>
-            )
-          })}
+            ))}
+          </div>
+          <Link href="/mon-compte" className="relative group">
+             <span className="text-[12px] uppercase tracking-widest font-bold opacity-40 group-hover:opacity-100 transition-opacity">Panier</span>
+             {cartCount > 0 && (
+               <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute -top-3 -right-3 w-5 h-5 bg-gold rounded-full text-[10px] flex items-center justify-center text-black font-bold shadow-lg">
+                 {cartCount}
+               </motion.span>
+             )}
+          </Link>
         </div>
-      </header>
+      </nav>
 
-      <div className="max-w-[1200px] mx-auto px-8 pt-12">
+      {/* ── WORKSPACE ── */}
+      <div className="flex-1 flex flex-col lg:flex-row">
         
-        <AnimatePresence mode="wait">
+        {/* ── LEFT: VISUALIZATION ── */}
+        <section className="flex-1 bg-[#120D0A] flex flex-col items-center justify-center p-12 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-rose/5 to-transparent pointer-events-none" />
           
-          {/* ── ÉTAPE 0 : QUIZ ── */}
-          {etape === 'quiz' && (
-            <motion.div key="quiz" {...stepVariants} className="max-w-[800px] mx-auto text-center py-10">
-              <div className="mb-16">
-                <h1 className="font-display text-6xl font-light mb-6">Signature <span className="italic text-rose">Unique</span></h1>
-                <p className="text-rose/40 font-light tracking-[0.3em] uppercase text-[10px]">Découvrez votre profil olfactif en quelques secondes</p>
-              </div>
+          <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 1 }} className="relative z-10">
+            <div className="w-48 h-80 border-[3px] border-white/10 rounded-[40px] relative p-1">
+               <div className="w-full h-full rounded-[36px] overflow-hidden relative">
+                  <motion.div animate={{ height: `${step > 1 ? 80 : 0}%`, background: couleur }} className="absolute bottom-0 left-0 w-full transition-all duration-1000 opacity-60 blur-[1px]" />
+                  <div className="absolute top-0 left-1/4 w-[1px] h-full bg-white/20" />
+                  <div className="absolute top-0 left-1/3 w-[2px] h-full bg-white/10" />
+               </div>
+               <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-16 h-12 bg-gradient-to-b from-white/20 to-white/5 border border-white/10 rounded-xl" />
+               <AnimatePresence>
+                 {gravure && (
+                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-center px-4">
+                     <p className="font-display text-sm italic text-white/40 tracking-widest leading-tight">{gravure}</p>
+                   </motion.div>
+                 )}
+               </AnimatePresence>
+            </div>
+            <div className="w-48 h-8 bg-rose/5 blur-xl mt-12 rounded-full mx-auto" />
+          </motion.div>
 
-              {loadingQuiz ? (
-                <div className="text-rose animate-pulse">Récupération du quiz...</div>
-              ) : questionsQuiz.length > 0 && quizStep < questionsQuiz.length ? (
-                <div className="space-y-16">
-                   <div className="text-rose text-[11px] tracking-[0.5em] uppercase font-bold">Étape {quizStep + 1} / {questionsQuiz.length}</div>
-                   <h2 className="text-4xl font-light font-display leading-tight">{questionsQuiz[quizStep].question}</h2>
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-12">
-                      {JSON.parse(typeof questionsQuiz[quizStep].options === 'string' ? questionsQuiz[quizStep].options : JSON.stringify(questionsQuiz[quizStep].options)).map((opt: any, idx: number) => (
-                        <button 
-                          key={idx}
-                          onClick={() => {
-                            const newReponses = [...reponsesQuiz, opt.valeur]
-                            setReponsesQuiz(newReponses)
-                            if (quizStep + 1 < questionsQuiz.length) setQuizStep(quizStep + 1)
-                            else finaliserQuiz(newReponses)
-                          }}
-                          className="glass-card p-8 hover:border-rose transition-all text-sm font-light tracking-widest uppercase hover:bg-rose/5"
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                   </div>
-                   <button onClick={() => setEtape('choix')} className="text-[10px] uppercase tracking-[0.4em] text-rose/30 hover:text-rose mt-10">Passer le guide →</button>
-                </div>
-              ) : (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12">
-                   <div className="text-7xl mb-10">✨</div>
-                   <h2 className="text-4xl font-display font-light">Votre recommandation</h2>
-                   <div className="glass-card p-12 border-rose/30 inline-block bg-rose/5">
-                      <p className="text-rose text-2xl font-medium tracking-widest mb-4">{recommandation}</p>
-                      <p className="text-rose/30 text-[10px] uppercase tracking-widest italic">Basé sur vos préférences olfactives</p>
-                   </div>
-                   <div className="pt-12">
-                      <button onClick={() => setEtape('choix')} className="btn-gold px-16 py-5">Accéder à la création</button>
-                   </div>
-                </motion.div>
-              )}
-            </motion.div>
-          )}
+          <div className="absolute bottom-12 text-center">
+             <h4 className="text-[12px] uppercase tracking-[0.4em] text-rose font-bold mb-2">Signature Maya Bar</h4>
+             <p className="font-display text-2xl italic opacity-30">L&apos;excellence est un choix.</p>
+          </div>
+        </section>
 
-          {/* ── ÉTAPE 1 : CHOIX ── */}
-          {etape === 'choix' && (
-            <motion.div key="choix" {...stepVariants}>
-              <div className="mb-16">
-                <h1 className="font-display text-6xl font-light mb-6">Art & <span className="italic text-rose">Senteurs</span></h1>
-                <p className="text-rose/40 font-light tracking-widest uppercase text-[10px]">Choisissez votre base de création</p>
-              </div>
-
-              {/* Toggle Mode */}
-              <div className="flex flex-wrap gap-2 bg-rose/5 p-1 rounded-sm w-fit border border-rose/10 mb-16">
-                {[
-                  { v: 'catalogue', l: '🏺 Catalogue' }, 
-                  { v: 'melange_parfums', l: '✨ Mix Parfums' },
-                  { v: 'melange_essences', l: '🧪 Sur-mesure' }
-                ].map(m => (
-                  <button 
-                    key={m.v} 
-                    onClick={() => {
-                      setMode(m.v as any)
-                      setParfumSelectionne(null)
-                      setParfumsChoisis([])
-                      setEssencesChoisies([])
-                    }}
-                    className={`px-8 py-3 text-[10px] uppercase tracking-widest transition-all ${mode === m.v ? 'bg-rose text-white font-bold' : 'text-rose/40 hover:text-rose'}`}
-                  >
-                    {m.l}
-                  </button>
-                ))}
-              </div>
-
-              {/* Mode: CATALOGUE */}
-              {mode === 'catalogue' && (
-                <div className="space-y-10">
-                  <div className="flex gap-4 items-center flex-wrap">
-                    <input 
-                      placeholder="Rechercher une fragrance..."
-                      value={filtreRecherche}
-                      onChange={e => setFiltreRecherche(e.target.value)}
-                      className="bg-white/5 border border-rose/10 px-8 py-5 flex-1 min-w-[300px] text-sm focus:border-rose/40 outline-none transition-colors font-light"
-                    />
-                    <div className="flex gap-2">
-                      {['Tous', 'Floral', 'Frais', 'Oriental'].map(f => (
-                        <button 
-                          key={f} 
-                          onClick={() => setFiltreFamille(f)}
-                          className={`px-6 py-3 text-[9px] uppercase tracking-widest border transition-all ${filtreFamille === f ? 'border-rose text-rose bg-rose/10' : 'border-rose/10 text-rose/30 hover:border-rose/30'}`}
-                        >
-                          {f}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {parfumsFiltres.map(p => (
-                      <motion.div 
-                        key={p.id}
-                        variants={cardVariants}
-                        whileHover="hover"
-                        whileTap="tap"
-                        onClick={() => setParfumSelectionne(p)}
-                        className={`glass-card p-10 cursor-pointer relative transition-all ${parfumSelectionne?.id === p.id ? 'border-rose ring-1 ring-rose/50 bg-rose/5' : ''}`}
-                      >
-                        <div className="flex justify-between items-start mb-6">
-                          <span className="text-[9px] uppercase tracking-widest text-rose/50">{p.famille}</span>
-                          {parfumSelectionne?.id === p.id && <span className="w-6 h-6 bg-rose rounded-full flex items-center justify-center text-white text-[10px]">✓</span>}
-                        </div>
-                        <h3 className="font-display text-3xl mb-1">{p.nom}</h3>
-                        <p className="text-[10px] text-rose/30 uppercase tracking-widest mb-10 italic">Inspiré de {p.marque_inspiree}</p>
-                        <div className="space-y-2 text-[11px] text-cream/40 mb-10 leading-relaxed">
-                          <p><span className="text-rose/40 uppercase tracking-tighter mr-2">Cœur:</span> {p.notes_coeur}</p>
-                          <p><span className="text-rose/40 uppercase tracking-tighter mr-2">Fond:</span> {p.notes_fond}</p>
-                        </div>
-                        <div className="text-2xl text-rose font-medium">{p.prix_50ml.toLocaleString()} F <span className="text-[9px] text-rose/30 uppercase tracking-widest">/ 50ml</span></div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Mode: MIX PARFUMS */}
-              {mode === 'melange_parfums' && (
-                <div className="space-y-12">
-                   <div className="bg-rose/5 border border-rose/10 p-8 rounded-sm flex items-center justify-between flex-wrap gap-8">
-                      <div className="text-sm font-light">
-                        Créez un sillage inédit en mélangeant <span className="text-rose font-bold">2 ou 3 parfums</span> iconiques.
-                      </div>
-                      <div className="flex gap-4">
-                        {parfumsChoisis.map(p => (
-                          <motion.div 
-                            initial={{ scale: 0 }} animate={{ scale: 1 }}
-                            key={p.id} 
-                            onClick={() => setParfumsChoisis(prev => prev.filter(x => x.id !== p.id))}
-                            className="bg-rose/10 border border-rose/20 px-5 py-2 rounded-full text-[10px] uppercase tracking-widest flex items-center gap-3 cursor-pointer hover:bg-rose/20 text-rose"
-                          >
-                            {p.nom} <span className="opacity-40">×</span>
-                          </motion.div>
-                        ))}
-                      </div>
-                   </div>
-
-                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {parfums.map(p => {
-                        const active = parfumsChoisis.some(x => x.id === p.id)
-                        const disabled = parfumsChoisis.length >= 3 && !active
-                        return (
-                          <motion.div 
-                            key={p.id}
-                            variants={cardVariants}
-                            whileHover={!disabled ? "hover" : ""}
-                            whileTap={!disabled ? "tap" : ""}
-                            onClick={() => !disabled && setParfumsChoisis(prev => active ? prev.filter(x => x.id !== p.id) : [...prev, p])}
-                            className={`glass-card p-8 cursor-pointer group transition-all text-center ${active ? 'border-rose bg-rose/10' : disabled ? 'opacity-20 grayscale' : ''}`}
-                          >
-                            <h4 className="font-display text-xl mb-1">{p.nom}</h4>
-                            <p className="text-[9px] uppercase tracking-widest text-rose/40 mb-4">{p.famille}</p>
-                            <div className="text-[10px] text-rose font-medium">{p.prix_50ml.toLocaleString()} F</div>
-                          </motion.div>
-                        )
-                      })}
-                   </div>
-                </div>
-              )}
-
-              {/* Mode: ESSENCES */}
-              {mode === 'melange_essences' && (
-                <div className="space-y-12">
-                   <div className="bg-rose/5 border border-rose/10 p-8 rounded-sm flex items-center justify-between flex-wrap gap-8">
-                      <div className="text-sm font-light">
-                        Assemblage haute-couture : sélectionnez <span className="text-rose font-bold">2 à 4 essences</span> pures.
-                      </div>
-                      <div className="flex gap-4">
-                        {essencesChoisies.map(e => (
-                          <motion.div 
-                            initial={{ scale: 0 }} animate={{ scale: 1 }}
-                            key={e.id} 
-                            onClick={() => setEssencesChoisies(prev => prev.filter(x => x.id !== e.id))}
-                            className="bg-rose/10 border border-rose/20 px-5 py-2 rounded-full text-[10px] uppercase tracking-widest flex items-center gap-3 cursor-pointer hover:bg-rose/20 text-rose"
-                          >
-                            <div className="w-2 h-2 rounded-full" style={{ background: e.couleur }} />
-                            {e.nom} <span className="opacity-40">×</span>
-                          </motion.div>
-                        ))}
-                      </div>
-                   </div>
-
-                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                      {essencesFiltrees.map(e => {
-                        const active = essencesChoisies.some(x => x.id === e.id)
-                        const disabled = essencesChoisies.length >= 4 && !active
-                        return (
-                          <motion.div 
-                            key={e.id}
-                            variants={cardVariants}
-                            whileHover={!disabled ? "hover" : ""}
-                            whileTap={!disabled ? "tap" : ""}
-                            onClick={() => !disabled && setEssencesChoisies(prev => active ? prev.filter(x => x.id !== e.id) : [...prev, e])}
-                            className={`glass-card p-8 cursor-pointer text-center group transition-all ${active ? 'border-rose bg-rose/10' : disabled ? 'opacity-20 grayscale' : ''}`}
-                          >
-                            <div className="w-14 h-14 rounded-full mx-auto mb-6 border border-rose/10 flex items-center justify-center p-1 group-hover:scale-110 transition-transform bg-rose/5">
-                               <div className="w-full h-full rounded-full shadow-inner" style={{ background: e.couleur }} />
-                            </div>
-                            <h4 className="text-[11px] font-medium mb-1 uppercase tracking-widest">{e.nom}</h4>
-                            <p className="text-[8px] uppercase tracking-[0.2em] text-rose/40 font-bold">{e.note}</p>
-                          </motion.div>
-                        )
-                      })}
-                   </div>
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {/* ── ÉTAPE 2 : PERSONALISATION ── */}
-          {etape === 'personalisation' && (
-            <motion.div key="perso" {...stepVariants} className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-20">
-              <div className="space-y-20">
-                <div>
-                   <h2 className="font-display text-5xl mb-4">Le Flacon <span className="italic text-rose">Signature</span></h2>
-                   <p className="text-rose/40 text-[11px] uppercase tracking-widest">Détails de votre création d&apos;exception</p>
-                </div>
-
-                {/* Contenance */}
-                <div className="space-y-8">
-                  <label className="text-[10px] uppercase tracking-[0.4em] text-rose/60 font-bold">Contenance & Prix</label>
-                  <div className="grid grid-cols-3 gap-6">
-                    {ML_OPTIONS.map(opt => (
-                      <motion.button 
-                        key={opt.val}
-                        whileHover={{ y: -6, borderColor: '#BC7C7C' }}
-                        onClick={() => setMl(opt.val)}
-                        className={`p-8 border-2 text-left transition-all relative ${ml === opt.val ? 'border-rose bg-rose/5 shadow-[0_0_30px_rgba(188,124,124,0.1)]' : 'border-rose/10 hover:border-rose/30'}`}
-                      >
-                        <div className="text-3xl font-display mb-2">{opt.val}ml</div>
-                        <div className="text-[11px] text-rose font-bold">
-                          {mode === 'catalogue' && parfumSelectionne ? (opt.val === 30 ? parfumSelectionne.prix_30ml : opt.val === 50 ? parfumSelectionne.prix_50ml : parfumSelectionne.prix_100ml).toLocaleString() : opt.prix_base.toLocaleString()} F
-                        </div>
-                        {ml === opt.val && <div className="absolute top-2 right-2 w-2 h-2 bg-rose rounded-full" />}
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Gravure */}
-                <div className="space-y-8">
-                  <label className="text-[10px] uppercase tracking-[0.4em] text-rose/60 font-bold">Gravure Laser (Optionnelle)</label>
-                  <input 
-                    maxLength={20}
-                    placeholder="Signature, date, initiales..."
-                    value={gravure}
-                    onChange={e => setGravure(e.target.value)}
-                    className="w-full bg-transparent border-b-2 border-rose/10 py-6 font-display text-4xl focus:border-rose outline-none transition-colors text-cream"
-                  />
-                  <p className="text-[10px] text-rose/30 italic uppercase tracking-widest">Gravure au diamant haute précision réalisée dans nos ateliers.</p>
-                </div>
-
-                {/* Retrait */}
-                <div className="space-y-8">
-                   <label className="text-[10px] uppercase tracking-[0.4em] text-rose/60 font-bold">Expérience de Retrait</label>
-                   <div className="flex gap-6">
-                      {[{ v: 'boutique', l: '🏪 Boutique Lomé' }, { v: 'livraison', l: '🛵 Livraison' }].map(opt => (
-                        <button 
-                          key={opt.v}
-                          onClick={() => setRetrait(opt.v as any)}
-                          className={`flex-1 p-8 border-2 text-[11px] font-bold uppercase tracking-[0.3em] transition-all ${retrait === opt.v ? 'border-rose bg-rose/5 text-rose' : 'border-rose/10 text-rose/20 hover:border-rose/40'}`}
-                        >
-                          {opt.l}
-                        </button>
-                      ))}
-                   </div>
-                </div>
-              </div>
-
-              {/* Preview Flacon */}
-              <div className="relative sticky top-32 h-fit">
-                 <motion.div 
-                    animate={{ y: [0, -15, 0] }}
-                    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                    className="glass-card p-16 text-center flex flex-col items-center justify-center relative overflow-hidden bg-rose/5 border-rose/20"
-                 >
-                    <div className="absolute inset-0 bg-gradient-to-b from-rose/10 to-transparent opacity-50" />
-                    
-                    <div className="w-36 h-64 border-2 border-rose/30 rounded-sm relative mb-12 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-                       <motion.div 
-                        initial={false}
-                        animate={{ backgroundColor: couleur }}
-                        className="absolute inset-x-2 bottom-2 top-16 opacity-40 blur-[2px]"
-                       />
-                       <div className="absolute inset-x-0 top-0 h-14 bg-rose/20 border-b border-rose/30" />
-                       <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="font-display text-[11px] text-white/60 italic tracking-[0.4em] rotate-[-90deg] uppercase">{gravure || "Maya Bar"}</span>
-                       </div>
-                    </div>
-
-                    <div className="space-y-4 relative z-10">
-                       <h3 className="font-display text-4xl text-rose font-bold">{prixActuel().toLocaleString()} F</h3>
-                       <p className="text-[10px] tracking-[0.5em] text-rose/40 uppercase font-bold">Flacon {ml}ml sur-mesure</p>
-                    </div>
-                 </motion.div>
-                 <div className="mt-8">
-                    <button 
-                      onClick={ajouterAuPanier}
-                      disabled={submitting}
-                      className="btn-gold w-full py-6 text-[11px] shadow-[0_15px_30px_rgba(188,124,124,0.2)]"
-                    >
-                      {submitting ? 'Traitement...' : '+ Ajouter au panier'}
+        {/* ── RIGHT: CONTROLS ── */}
+        <section className="w-full lg:w-[600px] bg-[#0D0800] border-l border-white/5 p-12 lg:p-20 overflow-y-auto">
+          <AnimatePresence mode="wait">
+            
+            {/* STEP 1: MODE SELECTION */}
+            {step === 1 && (
+              <motion.div key="step1" {...slideUp} className="space-y-12">
+                 <div>
+                    <h3 className="text-5xl font-display font-light mb-4">Le Début de la <span className="italic text-rose">Création</span></h3>
+                    <p className="text-white/40 text-sm font-light leading-relaxed">Comment souhaitez-vous composer votre essence unique aujourd&apos;hui ?</p>
+                 </div>
+                 <div className="space-y-6">
+                    <button onClick={() => { setMode('quiz'); setStep(2); }} className="w-full glass-card p-10 text-left group border-rose/30 bg-rose/5 transition-all flex justify-between items-center shadow-xl shadow-rose/5">
+                       <div><h4 className="text-2xl font-display mb-2 text-rose">Diagnostic Olfactif</h4><p className="text-[12px] uppercase tracking-widest text-rose/60 transition-colors italic">Laissez-nous vous guider...</p></div>
+                       <span className="text-2xl group-hover:translate-x-2 transition-transform text-rose">✨</span>
+                    </button>
+                    <button onClick={() => { setMode('custom'); handleNext(); }} className="w-full glass-card p-10 text-left group hover:border-rose transition-all flex justify-between items-center">
+                       <div><h4 className="text-2xl font-display mb-2">Création Pure</h4><p className="text-[12px] uppercase tracking-widest text-white/30 group-hover:text-rose/60 transition-colors">Assemblage d&apos;essences rares</p></div>
+                       <span className="text-2xl group-hover:translate-x-2 transition-transform">→</span>
+                    </button>
+                    <button onClick={() => { setMode('mix'); handleNext(); }} className="w-full glass-card p-10 text-left group hover:border-rose transition-all flex justify-between items-center">
+                       <div><h4 className="text-2xl font-display mb-2">Mélange Signature</h4><p className="text-[12px] uppercase tracking-widest text-white/30 group-hover:text-rose/60 transition-colors">Fusion de fragrances iconiques</p></div>
+                       <span className="text-2xl group-hover:translate-x-2 transition-transform">→</span>
                     </button>
                  </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ── ÉTAPE 3 : COORDONNÉES ── */}
-          {etape === 'coordonnees' && (
-            <motion.div key="coords" {...stepVariants} className="max-w-[700px] mx-auto">
-              <div className="text-center mb-16">
-                 <h2 className="font-display text-6xl mb-4">L&apos;Écrin <span className="italic text-rose">Final</span></h2>
-                 <p className="text-rose/40 text-[11px] uppercase tracking-widest font-light">Finalisez votre commande pour la préparation</p>
-              </div>
-              
-              <div className="space-y-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-3">
-                    <label className="text-[10px] uppercase tracking-widest text-rose/60 font-bold ml-1">Nom Complet</label>
-                    <input value={nomClient} onChange={e => setNomClient(e.target.value)} className="w-full bg-white/5 border border-rose/10 p-6 focus:border-rose outline-none transition-all font-light" />
-                  </div>
-                  <div className="space-y-3">
-                    <label className="text-[10px] uppercase tracking-widest text-rose/60 font-bold ml-1">WhatsApp (+228...)</label>
-                    <input value={telClient} onChange={e => setTelClient(e.target.value)} className="w-full bg-white/5 border border-rose/10 p-6 focus:border-rose outline-none transition-all font-light" />
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] uppercase tracking-widest text-rose/60 font-bold ml-1">Email de confirmation</label>
-                  <input type="email" value={emailClient} onChange={e => setEmailClient(e.target.value)} className="w-full bg-white/5 border border-rose/10 p-6 focus:border-rose outline-none transition-all font-light" />
-                </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] uppercase tracking-widest text-rose/60 font-bold ml-1">Date de Retrait Souhaitée</label>
-                  <input type="date" value={dateSouhaitee} onChange={e => setDateSouhaitee(e.target.value)} className="w-full bg-white/5 border border-rose/10 p-6 focus:border-rose outline-none transition-all color-scheme-dark" />
-                </div>
-              </div>
-
-              <div className="mt-16 p-12 bg-rose/5 border border-rose/20 rounded-sm">
-                 <h4 className="text-[10px] uppercase tracking-[0.4em] text-rose mb-8 font-bold">Récapitulatif de création</h4>
-                 <div className="flex justify-between items-end">
-                    <div className="text-sm text-cream/50 leading-relaxed font-light">
-                       {mode === 'catalogue' ? `🏺 Base: ${parfumSelectionne?.nom}` : 
-                        mode === 'melange_parfums' ? `✨ Mix: ${parfumsChoisis.map(p => p.nom).join(', ')}` :
-                        `🧪 Création: ${essencesChoisies.length} essences`}<br />
-                       Flacon {ml}ml · {retrait}
-                    </div>
-                    <div className="text-4xl font-display text-rose font-bold">{prixActuel().toLocaleString()} F</div>
+                 <div className="pt-8 text-center">
+                    <Link href="/" className="text-[12px] uppercase tracking-widest text-white/30 hover:text-rose transition-colors font-bold">← Abandonner et retourner à l&apos;accueil</Link>
                  </div>
-              </div>
-            </motion.div>
-          )}
+              </motion.div>
+            )}
 
-          {/* ── ÉTAPE 4 : CONFIRMATION ── */}
-          {etape === 'confirmation' && (
-            <motion.div key="confirm" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="max-w-[800px] mx-auto text-center py-24">
-               <div className="text-8xl mb-12">✨</div>
-               <h2 className="font-display text-6xl mb-8 leading-tight">Votre Signature est <br /><span className="italic text-rose">Réservée</span></h2>
-               <p className="text-rose/50 text-xl font-light mb-16 tracking-wide">Référence: <span className="text-rose font-bold tracking-[0.2em]">#{commandeRef}</span></p>
-               
-               <div className="bg-rose/5 p-12 border border-rose/10 text-left space-y-10 rounded-sm">
-                  <p className="text-sm leading-relaxed font-light opacity-80">
-                    Un récapitulatif a été envoyé à <strong>{emailClient}</strong>. <br />
-                    Votre session <strong>WhatsApp</strong> va s&apos;ouvrir pour finaliser les détails avec notre concierge.
-                  </p>
-                  <div className="h-px bg-rose/10" />
-                  <div className="flex flex-col md:flex-row gap-10 justify-between items-start md:items-center">
-                     <div>
-                        <div className="text-[10px] uppercase tracking-[0.4em] text-rose font-bold mb-2">Modes de Règlement</div>
-                        <div className="text-sm text-cream/60 font-light">TMoney / Flooz au <span className="text-rose font-bold">70 99 35 97</span> ou Espèces.</div>
-                     </div>
-                     <button onClick={() => window.open(`https://wa.me/22870993597?text=Bonjour%20Maya%20Bar%2C%20je%20viens%20de%20valider%20ma%20commande%20%23${commandeRef}`, '_blank')} className="btn-gold px-10 py-4 text-[10px]">Ouvrir WhatsApp</button>
-                  </div>
-               </div>
+            {/* STEP 2: QUIZ FLOW OR SELECTION */}
+            {step === 2 && mode === 'quiz' && (
+              <motion.div key="quiz" {...slideUp} className="space-y-12">
+                 <div className="flex justify-between items-start">
+                    <div><h3 className="text-4xl font-display font-light mb-2">Diagnostic <span className="italic text-rose">Privé</span></h3><p className="text-rose/50 text-[12px] uppercase tracking-[0.4em] font-bold">Question {currentQuizIndex + 1} sur {quizQuestions.length}</p></div>
+                    <button onClick={handleBack} className="text-[12px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity">Retour</button>
+                 </div>
+                 {quizQuestions[currentQuizIndex] && (
+                   <div className="space-y-8">
+                      <p className="text-xl font-light leading-relaxed italic">{quizQuestions[currentQuizIndex].question}</p>
+                      <div className="grid grid-cols-1 gap-4">
+                        {parseOptions(quizQuestions[currentQuizIndex].options).map((opt: any, i: number) => (
+                          <button key={i} onClick={() => handleQuizAnswer(opt)} className="w-full p-6 text-left border border-white/10 rounded-2xl bg-white/5 hover:border-rose/50 hover:bg-rose/5 transition-all text-sm font-light">
+                            {opt.label || opt.text || String(opt)}
+                          </button>
+                        ))}
+                      </div>
+                   </div>
+                 )}
+              </motion.div>
+            )}
 
-               <div className="mt-16">
-                  <Link href="/"><button className="text-[10px] uppercase tracking-[0.5em] text-rose/30 hover:text-rose transition-all">← Retour à la galerie</button></Link>
-               </div>
-            </motion.div>
-          )}
+            {/* STEP 2: SELECTION (Post-Quiz or Direct) */}
+            {step === 2 && mode !== 'quiz' && (
+              <motion.div key="step2" {...slideUp} className="space-y-12">
+                 <div className="flex justify-between items-start">
+                    <div><h3 className="text-4xl font-display font-light mb-2">{mode === 'custom' ? 'Sélection des Essences' : 'Mix de Fragrances'}</h3><p className="text-rose/50 text-[12px] uppercase tracking-[0.4em] font-bold">Étape 2 sur 4</p></div>
+                    <button onClick={handleBack} className="text-[12px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity">Retour</button>
+                 </div>
+                 <div className="grid grid-cols-1 gap-4 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
+                    {mode === 'custom' ? essences.map(e => (
+                      <div key={e.id} onClick={() => toggleEssence(e)} className={`p-6 rounded-2xl border transition-all cursor-pointer flex justify-between items-center ${selectedEssences.find(x => x.id === e.id) ? 'bg-rose border-rose text-white' : 'bg-white/5 border-white/10 hover:border-rose/40 text-white/60'}`}>
+                         <div className="flex items-center gap-4"><div className="w-8 h-8 rounded-full border border-white/10" style={{ background: e.couleur }} /><div><div className="text-base font-medium">{e.nom}</div><div className="text-[11px] uppercase tracking-widest opacity-60">{e.famille} — {e.note}</div></div></div>
+                         {selectedEssences.find(x => x.id === e.id) && <span>✓</span>}
+                      </div>
+                    )) : parfums.map(p => (
+                      <div key={p.id} onClick={() => toggleMix(p)} className={`p-6 rounded-2xl border transition-all cursor-pointer flex justify-between items-center ${selectedMix.find(x => x.id === p.id) ? 'bg-rose border-rose text-white' : 'bg-white/5 border-white/10 hover:border-rose/40 text-white/60'}`}>
+                         <div className="flex items-center gap-4"><div className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center text-xs">🏺</div><div><div className="text-base font-medium">{p.nom}</div><div className="text-[11px] uppercase tracking-widest opacity-60">{p.famille}</div></div></div>
+                         {selectedMix.find(x => x.id === p.id) && <span>✓</span>}
+                      </div>
+                    ))}
+                 </div>
+                 <button onClick={handleNext} disabled={mode === 'custom' ? selectedEssences.length === 0 : selectedMix.length === 0} className="btn-gold w-full py-6 disabled:opacity-20">VALIDER LA SÉLECTION</button>
+              </motion.div>
+            )}
 
-        </AnimatePresence>
+            {/* STEP 3: RECOMMENDATION (from Quiz) */}
+            {step === 3 && mode === 'quiz' && (
+              <motion.div key="recommendation" {...slideUp} className="space-y-12">
+                 <div className="text-center space-y-8 py-10">
+                    <div className="text-6xl mb-6">✨</div>
+                    <h3 className="text-4xl font-display font-light">Votre Profil : <span className="italic text-rose">{quizRecommendation}</span></h3>
+                    <p className="text-white/40 text-sm font-light leading-relaxed max-w-sm mx-auto uppercase tracking-widest">Nous avons identifié les notes qui feront vibrer votre âme.</p>
+                    <div className="pt-10 flex flex-col gap-4">
+                       <button onClick={() => { setMode('custom'); handleNext(); }} className="btn-gold w-full py-6">Voir les Essences suggérées</button>
+                       <button onClick={() => { setMode('mix'); handleNext(); }} className="bg-white/5 border border-white/10 w-full py-6 rounded-full text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all">Ou choisir un mélange prêt</button>
+                    </div>
+                 </div>
+              </motion.div>
+            )}
 
-        {/* ── NAVIGATION ── */}
-        {etape !== 'confirmation' && (
-          <div className="mt-24 pt-12 border-t border-rose/10 flex justify-between items-center">
-            <button 
-              onClick={() => {
-                if (etape === 'choix') router.push('/')
-                else if (etape === 'personalisation') setEtape('choix')
-                else if (etape === 'coordonnees') setEtape('personalisation')
-              }}
-              className="text-[10px] uppercase tracking-[0.5em] text-rose/30 hover:text-rose transition-all"
-            >
-              ← Retour
-            </button>
-            
-            <div className="flex gap-6 items-center">
-               {etape === 'choix' && (
-                  <button 
-                    onClick={ajouterAuPanier}
-                    disabled={!peutContinuer() || submitting}
-                    className="text-[10px] uppercase tracking-[0.3em] text-rose border border-rose/30 px-10 py-5 hover:bg-rose/5 transition-all"
-                  >
-                    Ajouter & Continuer
-                  </button>
-               )}
-               <button 
-                disabled={!peutContinuer() || submitting}
-                onClick={() => {
-                  if (etape === 'choix') setEtape('personalisation')
-                  else if (etape === 'personalisation') setEtape('coordonnees')
-                }}
-                className={`btn-gold px-16 ${!peutContinuer() || submitting ? 'opacity-20 grayscale pointer-events-none' : ''}`}
-              >
-                {submitting ? '...' : etape === 'coordonnees' ? '🚀 Confirmer la Commande' : 'Continuer →'}
-              </button>
-            </div>
-          </div>
-        )}
+            {/* STEP 3: CUSTOMIZATION (Regular flow) */}
+            {step === 3 && mode !== 'quiz' && (
+              <motion.div key="step3" {...slideUp} className="space-y-12">
+                 <div className="flex justify-between items-start">
+                    <div><h3 className="text-4xl font-display font-light mb-2">Personnalisation</h3><p className="text-rose/50 text-[12px] uppercase tracking-[0.4em] font-bold">Étape 3 sur 4</p></div>
+                    <button onClick={handleBack} className="text-[12px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity">Retour</button>
+                 </div>
+                 <div className="space-y-10">
+                    <div className="space-y-4">
+                       <label className="text-[12px] uppercase tracking-[0.4em] text-rose font-bold">Contenance</label>
+                       <div className="flex gap-4">
+                          {[30, 50, 100].map(v => (
+                            <button key={v} onClick={() => setMl(v)} className={`flex-1 py-4 rounded-xl border text-xs font-bold transition-all ${ml === v ? 'bg-rose border-rose text-white' : 'bg-white/5 border-white/10 text-white/40'}`}>{v}ml</button>
+                          ))}
+                       </div>
+                    </div>
+                    <div className="space-y-4">
+                       <label className="text-[12px] uppercase tracking-[0.4em] text-rose font-bold">Gravure Laser</label>
+                       <input value={gravure} onChange={e => setGravure(e.target.value)} placeholder="Votre message secret..." className="w-full bg-white/5 border border-white/10 p-6 rounded-2xl outline-none focus:border-rose transition-all" maxLength={25} />
+                    </div>
+                 </div>
+                 <button onClick={handleNext} className="btn-gold w-full py-6">ÉVALUER L&apos;ASSEMBLAGE</button>
+              </motion.div>
+            )}
 
+            {/* STEP 4: SUMMARY & CART */}
+            {step === 4 && (
+              <motion.div key="step4" {...slideUp} className="space-y-12">
+                 <div><h3 className="text-4xl font-display font-light mb-2">Votre <span className="italic text-rose">Chef-d&apos;Œuvre</span></h3><p className="text-white/30 text-sm font-light">Résumé de votre composition avant la mise en flacon.</p></div>
+                 <div className="glass-card p-10 space-y-8">
+                    <div className="flex justify-between items-center border-b border-white/5 pb-6">
+                       <div className="text-[12px] uppercase tracking-widest text-rose font-bold">Type</div>
+                       <div className="text-base font-medium">{mode === 'custom' ? 'Création Pure' : 'Mélange Signature'}</div>
+                    </div>
+                    <div className="space-y-2">
+                       <div className="text-[12px] uppercase tracking-widest text-rose font-bold">Composition</div>
+                       <div className="flex flex-wrap gap-2 pt-2">
+                          {(mode === 'custom' ? selectedEssences : selectedMix).map(x => (
+                             <span key={x.id} className="px-4 py-2 bg-white/5 rounded-full text-[12px] border border-white/10">{x.nom}</span>
+                          ))}
+                       </div>
+                    </div>
+                    <div className="flex justify-between items-center pt-6 border-t border-white/5">
+                       <div className="text-3xl font-display text-gold font-bold">{(ml === 30 ? 9500 : ml === 50 ? 14000 : 22000).toLocaleString()} F</div>
+                       <div className="text-[12px] uppercase tracking-widest opacity-50">{ml}ml</div>
+                    </div>
+                 </div>
+                 <button onClick={addToCart} disabled={adding} className="btn-gold w-full py-6 text-xl tracking-tighter italic disabled:opacity-50">{adding ? 'MISE EN FLACON...' : 'AJOUTER AU PANIER'}</button>
+                 <button onClick={handleBack} className="w-full text-[12px] uppercase tracking-widest text-white/30 font-bold hover:text-white transition-colors">Modifier la création</button>
+              </motion.div>
+            )}
+
+          </AnimatePresence>
+        </section>
       </div>
-    </main>
+
+      {/* ── TOAST NOTIFICATION ── */}
+      <AnimatePresence>
+        {showToast && (
+          <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }} className="fixed bottom-12 right-12 bg-white text-black px-10 py-6 rounded-2xl shadow-2xl z-[200] flex items-center gap-6 border border-rose/20">
+             <div className="w-8 h-8 bg-rose rounded-full flex items-center justify-center text-white text-xs">✓</div>
+             <div><p className="text-[10px] uppercase tracking-[0.4em] font-bold">Succès Olfactif</p><p className="text-xs font-light opacity-60">Votre création a rejoint votre panier.</p></div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <style jsx global>{`
+        .glass-card { background: rgba(18, 13, 10, 0.4); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 40px; }
+        .btn-gold { background: #BC7C7C; color: white; font-family: var(--font-display); font-weight: 500; letter-spacing: 0.4em; text-transform: uppercase; transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1); border-radius: 100px; border: 1px solid rgba(255, 255, 255, 0.1); }
+        .btn-gold:hover { background: white; color: black; transform: translateY(-8px); box-shadow: 0 30px 60px rgba(188, 124, 124, 0.2); }
+        .custom-scrollbar::-webkit-scrollbar { width: 2px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #BC7C7C; }
+      `}</style>
+    </div>
   )
 }
+

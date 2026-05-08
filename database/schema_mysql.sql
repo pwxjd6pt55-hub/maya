@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS commandes (
   client_nom VARCHAR(150) NOT NULL,
   client_telephone VARCHAR(20) NOT NULL,
   client_email VARCHAR(150),
-  mode_commande ENUM('catalogue','melange') NOT NULL,
+  mode_commande ENUM('catalogue','melange','melange_essences','melange_parfums') NOT NULL,
   parfum_catalogue_id INT,
   parfum_catalogue_nom VARCHAR(150),
   ml INT DEFAULT 50,

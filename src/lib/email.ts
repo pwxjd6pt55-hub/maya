@@ -1,4 +1,4 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface CommandeEmailData {
@@ -136,16 +136,24 @@ export async function envoyerEmailsCommande(cmd: CommandeEmailData): Promise<{
   clientSent: boolean;
   error?: string;
 }> {
-  const resend = new Resend(process.env.RESEND_API_KEY);
-  const adminEmail = process.env.ADMIN_EMAIL || "kougnimag@gmail.com";
+  // Configuration Nodemailer avec Gmail
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASSWORD,
+    },
+  });
+
+  const adminEmail = process.env.ADMIN_EMAIL || process.env.GMAIL_USER || "kougnimag@gmail.com";
   let adminSent = false;
   let clientSent = false;
 
   try {
-    // 1. Email à l'admin (Indispensable)
+    // 1. Email à l'admin
     if (adminEmail) {
-      await resend.emails.send({
-        from: "Maya Bar <onboarding@resend.dev>",
+      await transporter.sendMail({
+        from: `"Maya Bar" <${process.env.GMAIL_USER}>`,
         to: adminEmail,
         subject: `✨ NOUVELLE COMMANDE #${cmd.id} — ${cmd.clientNom} — ${cmd.prix} F`,
         html: templateAdmin(cmd),
@@ -153,25 +161,24 @@ export async function envoyerEmailsCommande(cmd: CommandeEmailData): Promise<{
       adminSent = true;
     }
 
-    // 2. Email au client (Si email fourni et domaine vérifié)
-    // Note: onboarding@resend.dev ne permet d'envoyer qu'à l'email du compte Resend
+    // 2. Email au client
     if (cmd.clientEmail) {
       try {
-        await resend.emails.send({
-          from: "Maya Bar <onboarding@resend.dev>",
+        await transporter.sendMail({
+          from: `"Maya Bar" <${process.env.GMAIL_USER}>`,
           to: cmd.clientEmail,
           subject: `Votre Signature Maya Bar est réservée — #${cmd.id}`,
           html: templateClient(cmd),
         });
         clientSent = true;
       } catch (e) {
-        console.warn("Client email failed (likely unverified domain):", e);
+        console.warn("Client email failed:", e);
       }
     }
 
     return { success: true, adminSent, clientSent };
   } catch (error) {
-    console.error("Erreur envoi email:", error);
+    console.error("Erreur envoi email via Nodemailer:", error);
     return {
       success: false,
       adminSent,

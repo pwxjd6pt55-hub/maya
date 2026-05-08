@@ -18,6 +18,10 @@ let PARFUMS_FALLBACK = [
   { id: 12, nom: 'Soleil d\'Afrique', marque_inspiree: 'Creed Aventus', famille: 'Fruité Boisé', prix_30ml: 12000, prix_50ml: 18000, prix_100ml: 28000, notes_tete: 'Ananas, Pomme Verte', notes_coeur: 'Bouleau, Jasmin', notes_fond: 'Chêne, Musc, Ambre', image_url: '/parfums/parfum_noir.png' },
 ]
 
+
+import { getSession } from '@/lib/auth'
+
+
 export async function GET() {
   try {
     const [rows] = await pool.execute(
@@ -29,22 +33,9 @@ export async function GET() {
   }
 }
 
-// Vérification auth
-async function isAuth() {
-  const cookieStore = cookies()
-  const token = cookieStore.get('admin_session')?.value
-  if (!token) return false
-  try {
-    const secretKey = new TextEncoder().encode(process.env.SESSION_SECRET || 'super_secret_key_for_maya_bar_12345!')
-    await jwtVerify(token, secretKey)
-    return true
-  } catch (e) {
-    return false
-  }
-}
-
 export async function POST(request: NextRequest) {
-  if (!(await isAuth())) return NextResponse.json({ success: false, error: 'Non autorisé' }, { status: 401 })
+  const session = await getSession()
+  if (!session || !session.isAdmin) return NextResponse.json({ success: false, error: 'Non autorisé' }, { status: 401 })
   try {
     const data = await request.json()
     const { nom, marque_inspiree, famille, notes_tete, notes_coeur, notes_fond, prix_30ml, prix_50ml, prix_100ml, image_url } = data
@@ -68,7 +59,8 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  if (!(await isAuth())) return NextResponse.json({ success: false, error: 'Non autorisé' }, { status: 401 })
+  const session = await getSession()
+  if (!session || !session.isAdmin) return NextResponse.json({ success: false, error: 'Non autorisé' }, { status: 401 })
   try {
     const data = await request.json()
     const { id, nom, marque_inspiree, famille, notes_tete, notes_coeur, notes_fond, prix_30ml, prix_50ml, prix_100ml, image_url } = data
@@ -94,7 +86,8 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  if (!(await isAuth())) return NextResponse.json({ success: false, error: 'Non autorisé' }, { status: 401 })
+  const session = await getSession()
+  if (!session || !session.isAdmin) return NextResponse.json({ success: false, error: 'Non autorisé' }, { status: 401 })
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')

@@ -1,208 +1,99 @@
-export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
-import { envoyerEmailsCommande } from "@/lib/email";
 import { getSession } from "@/lib/auth";
+import { envoyerEmailsCommande } from "@/lib/email";
 
-// ─── Données de démo (si pas de DB) ──────────────────────────────────────────
-const commandesDemo = [
-  {
-    id: "CMD-001",
-    reference: "MB-DEMO-001",
-    client_nom: "Fatima Zahra",
-    client_telephone: "22890000001",
-    client_email: "fatima@example.com",
-    parfum_catalogue_nom: "Rose d'Orient",
-    ml: 50,
-    gravure: "Mon âme sœur",
-    prix_total: 14000,
-    statut: "nouvelle",
-    mode_commande: "catalogue",
-    created_at: new Date().toISOString(),
-  },
-];
-
-// ─── GET — Liste des commandes ────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const statut = searchParams.get("statut");
   const session = await getSession();
-
   try {
-    let query = `
-      SELECT c.*, GROUP_CONCAT(e.nom SEPARATOR ', ') as essences_noms
-      FROM commandes c
-      LEFT JOIN commande_essences ce ON c.id = ce.commande_id
-      LEFT JOIN essences e ON ce.essence_id = e.id
-      WHERE 1=1
-    `;
     const params: any[] = [];
-
-    // Si on est un admin, on voit tout. Sinon, on voit seulement ses propres commandes.
+    let query = `SELECT * FROM commandes WHERE 1=1`;
     if (!session || session.role !== 'admin') {
       if (!session) return NextResponse.json({ success: true, data: [] });
-      query += " AND c.user_id = ? ";
+      query += " AND user_id = ? ";
       params.push(session.userId);
     }
-
-    if (statut) {
-      query += " AND c.statut = ? ";
-      params.push(statut);
-    }
-
-    query += " GROUP BY c.id ORDER BY c.created_at DESC";
-
+    query += " ORDER BY created_at DESC";
     const [rows] = await pool.execute(query, params);
     return NextResponse.json({ success: true, data: rows });
   } catch (error) {
     console.error("DB Error:", error);
-    return NextResponse.json({ success: true, data: commandesDemo, demo: true });
+    return NextResponse.json({ success: false, error: 'Erreur serveur' }, { status: 500 });
   }
 }
 
-// ─── POST — Nouvelle commande ─────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
   const session = await getSession();
   try {
     const body = await request.json();
+    const { items, prix_total, telephone, adresse, mode_livraison, nom, email } = body;
 
-    const {
-      client_nom,
-      client_telephone,
-      client_email,
-      mode_commande,
-      parfum_catalogue_id,
-      parfum_catalogue_nom,
-      ml,
-      couleur_parfum,
-      gravure,
-      retrait,
-      date_souhaitee,
-      essences_ids,
-      prix_total,
-    } = body;
-
-    // Validation de base
-    if (!client_nom || !client_telephone || !mode_commande || (prix_total === undefined || prix_total === null)) {
-      return NextResponse.json({ success: false, error: "Champs obligatoires manquants" }, { status: 400 });
+    if (!items || items.length === 0 || !telephone) {
+      return NextResponse.json({ success: false, error: "Champs manquants" }, { status: 400 });
     }
 
     const datePart = new Date().toISOString().slice(2, 10).replace(/-/g, "");
-    const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const reference = `MB-${datePart}-${randomPart}`;
+    const createdReferences: string[] = [];
 
-    const declencherEnvoiEmails = (ref: string) => {
-      try {
-        const dateCommande = new Date().toLocaleString("fr-FR", {
-          timeZone: "Africa/Lome",
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+    // On boucle sur chaque article — chaque article = une référence unique
+    for (const item of items) {
+      const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const reference = `MB-${datePart}-${randomPart}`;
 
-        envoyerEmailsCommande({
-          id: ref,
-          clientNom: client_nom,
-          clientTel: client_telephone,
-          clientEmail: client_email,
-          parfum: mode_commande === 'catalogue' ? parfum_catalogue_nom : "Mélange personnalisé",
-          contenance: `${ml}ml`,
-          gravure,
-          prix: prix_total,
-          type: mode_commande,
-          dateCommande,
-        } as any).catch(e => console.error("Email error:", e));
-      } catch (err) { console.error(err); }
-    };
-
-    try {
-      const [result]: any = await pool.execute(
+      await pool.execute(
         `INSERT INTO commandes 
-          (reference, user_id, client_nom, client_telephone, client_email, mode_commande, parfum_catalogue_id, parfum_catalogue_nom, ml, couleur_parfum, gravure, retrait, date_souhaitee, prix_total, statut)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'nouvelle')`,
+          (reference, user_id, client_nom, client_telephone, client_email, mode_commande, 
+           parfum_catalogue_id, parfum_catalogue_nom, ml, gravure, prix_total, statut, retrait)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'nouvelle', ?)`,
         [
           reference,
           session?.userId || null,
-          client_nom,
-          client_telephone,
-          client_email || null,
-          mode_commande,
-          parfum_catalogue_id || null,
-          parfum_catalogue_nom || null,
-          ml || 50,
-          couleur_parfum || null,
-          gravure || null,
-          retrait || 'boutique',
-          date_souhaitee || null,
-          prix_total,
+          nom || 'Client Maya',
+          telephone,
+          email || null,
+          item.item_type === 'catalogue' ? 'catalogue' : 'melange',
+          item.parfum_catalogue_id || null,
+          item.nom_personnalise || null,
+          item.ml || 50,
+          item.gravure || null,
+          item.prix || (prix_total / items.length),
+          mode_livraison === 'retrait' ? 'boutique' : 'livraison'
         ]
       );
-
-      const commandeId = result.insertId;
-
-      // ── 2. Sauvegarder les essences si c'est un mélange ─────────────────────────
-      if (mode_commande === 'melange' && essences_ids && Array.isArray(essences_ids)) {
-        for (const essId of essences_ids) {
-          await pool.execute(
-            "INSERT INTO commande_essences (commande_id, essence_id) VALUES (?, ?)",
-            [commandeId, essId]
-          );
-        }
-      }
-
-      // Succès base de données -> Envoi email
-      declencherEnvoiEmails(reference);
-
-      return NextResponse.json({
-        success: true,
-        reference,
-        message: `Commande ${reference} créée avec succès`,
-      });
-
-    } catch (error: any) {
-      console.error("Erreur création commande (DB):", error);
-
-      // MODE SECOURS : Même si la DB échoue, on envoie quand même l'email !
-      const tempRef = `MB-TEMP-${Date.now().toString(36).toUpperCase()}`;
-      declencherEnvoiEmails(tempRef);
-
-      return NextResponse.json({
-        success: true,
-        reference: tempRef,
-        message: "Commande enregistrée (Mode secours - Email envoyé)",
-        demo: true
-      });
+      createdReferences.push(reference);
     }
+
+    // ─── ENVOI DES EMAILS ───
+    // On envoie un email récapitulatif pour la commande (basé sur le premier article pour le template)
+    try {
+      const firstItem = items[0];
+      await envoyerEmailsCommande({
+        id: createdReferences.join(', '),
+        clientNom: nom || 'Client Maya',
+        clientTel: telephone,
+        clientEmail: email,
+        parfum: items.length > 1 ? `${firstItem.nom_personnalise} (+ ${items.length - 1} autres)` : firstItem.nom_personnalise,
+        contenance: `${firstItem.ml}ml`,
+        gravure: firstItem.gravure,
+        prix: prix_total,
+        type: firstItem.item_type,
+        dateCommande: new Date().toLocaleDateString('fr-FR')
+      });
+    } catch (emailErr) {
+      console.error("Email sending failed but order was saved:", emailErr);
+    }
+
+    return NextResponse.json({ success: true, reference: createdReferences[0], references: createdReferences });
   } catch (error: any) {
-    console.error("Erreur fatale POST:", error);
+    console.error("Erreur POST:", error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
-// ─── PATCH — Changer le statut ────────────────────────────────────────────────
 export async function PATCH(request: NextRequest) {
-  const body = await request.json();
-  const { id, statut } = body;
-
-  if (!id || !statut) {
-    return NextResponse.json({ error: "id et statut requis" }, { status: 400 });
-  }
-
-  const statutsValides = ["nouvelle", "en_preparation", "prete", "livree", "annulee"];
-  if (!statutsValides.includes(statut)) {
-    return NextResponse.json({ error: "Statut invalide" }, { status: 400 });
-  }
-
   try {
-    await pool.execute(
-      "UPDATE commandes SET statut = ?, updated_at = NOW() WHERE id = ?",
-      [statut, id]
-    );
-    return NextResponse.json({ success: true, id, statut });
-  } catch (error) {
-    console.error("PATCH DB Error:", error);
-    return NextResponse.json({ success: true, id, statut, demo: true });
-  }
+    const { id, statut } = await request.json();
+    await pool.execute("UPDATE commandes SET statut = ? WHERE id = ?", [statut, id]);
+    return NextResponse.json({ success: true });
+  } catch (e) { return NextResponse.json({ success: false }, { status: 500 }); }
 }

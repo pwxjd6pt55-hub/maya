@@ -1,189 +1,300 @@
 'use client'
-import React, { useState, useEffect, useCallback } from 'react'
-import Link from 'next/link'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
-export default function MyAccountPage() {
-  const [user, setUser] = useState<any>(null)
-  const [commandes, setCommandes] = useState<any[]>([])
-  const [panier, setPanier] = useState<any[]>([])
+const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
+  nouvelle:       { label: 'Nouvelle',       color: '#BC7C7C', bg: 'rgba(188,124,124,0.12)' },
+  en_preparation: { label: 'En préparation', color: '#C9A84C', bg: 'rgba(201,168,76,0.12)'  },
+  prete:          { label: 'Prête',          color: '#6FC48A', bg: 'rgba(111,196,138,0.12)' },
+  livree:         { label: 'Livrée ✓',       color: '#6FC48A', bg: 'rgba(111,196,138,0.12)' },
+  annulee:        { label: 'Annulée',        color: '#999',    bg: 'rgba(153,153,153,0.10)' },
+}
+
+export default function AccountElite() {
+  const [user, setUser]     = useState<any>(null)
+  const [orders, setOrders] = useState<any[]>([])
+  const [cart, setCart]     = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const router = useRouter()
-
-  const chargerDonnees = useCallback(async () => {
-    try {
-      const [resCmd, resPanier] = await Promise.all([
-        fetch('/api/commandes').then(r => r.json()),
-        fetch('/api/cart').then(r => r.json())
-      ])
-      if (resCmd.success) setCommandes(resCmd.data)
-      if (resPanier.success) setPanier(resPanier.items)
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  const [activeTab, setActiveTab] = useState<'commandes' | 'panier'>('commandes')
 
   useEffect(() => {
-    fetch('/api/auth').then(r => r.json()).then(data => {
-      if (data.authenticated) {
-        setUser(data.user)
-        chargerDonnees()
-      } else {
-        router.push('/connexion')
-      }
-    })
-  }, [chargerDonnees, router])
+    fetch('/api/auth')
+      .then(r => r.json())
+      .then(d => {
+        if (d.authenticated) { setUser(d.user); fetchData() }
+        else window.location.href = '/connexion'
+      })
+  }, [])
 
-  const logout = async () => {
-    await fetch('/api/auth', { method: 'DELETE' })
-    router.push('/')
+  const fetchData = async () => {
+    try {
+      const [resO, resC] = await Promise.all([
+        fetch('/api/commandes').then(r => r.json()),
+        fetch('/api/cart').then(r => r.json()),
+      ])
+      if (resO.success) setOrders(resO.data || [])
+      if (resC.success) setCart(resC.items || [])
+    } catch (e) { console.error(e) }
+    setLoading(false)
   }
 
-  const supprimerDuPanier = async (id: number) => {
-    await fetch(`/api/cart?id=${id}`, { method: 'DELETE' })
-    chargerDonnees()
-  }
+  const handleLogout = () =>
+    fetch('/api/auth', { method: 'DELETE' }).then(() => (window.location.href = '/'))
 
-  const recommander = async (c: any) => {
-    setSubmitting(true)
-    const payload = {
-      item_type: c.mode_commande,
-      parfum_catalogue_id: c.parfum_catalogue_id,
-      ml: c.ml,
-      prix: c.prix_total,
-      quantite: 1,
-      gravure: c.gravure,
-      couleur: c.couleur_parfum,
-      essences_json: c.essences || null // Si dispo dans l'objet commande
-    }
+  const handleReorder = async (order: any) => {
     await fetch('/api/cart', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        item_type: order.mode_commande,
+        parfum_catalogue_id: order.parfum_catalogue_id,
+        nom_personnalise: order.parfum_catalogue_nom,
+        ml: order.ml,
+        prix: order.prix_total,
+        gravure: order.gravure,
+      }),
     })
-    chargerDonnees()
-    setSubmitting(false)
-    alert('Commande ajoutée au panier !')
+    setActiveTab('panier')
+    fetchData()
   }
 
-  const validerPanier = () => {
-    // Rediriger vers une page de checkout ou ouvrir le configurateur à l'étape finale
-    router.push('/configurateur?step=final')
-  }
+  const cartTotal = cart.reduce((a, c) => a + (c.prix || 0), 0)
 
-  if (loading) return <div className="min-h-screen bg-[#0D0800] flex items-center justify-center text-rose animate-pulse">Chargement...</div>
+  /* ── LOADING ── */
+  if (loading) return (
+    <div className="min-h-screen bg-[#0D0800] flex items-center justify-center">
+      <motion.div
+        animate={{ opacity: [0.3, 1, 0.3] }}
+        transition={{ repeat: Infinity, duration: 1.6 }}
+        className="text-rose font-display text-xl tracking-[0.4em] uppercase italic"
+      >
+        Maya Bar…
+      </motion.div>
+    </div>
+  )
 
   return (
-    <main className="min-h-screen bg-[#0D0800] text-cream p-8 md:p-20 font-body">
-      <div className="max-w-[1200px] mx-auto">
-        
-        <header className="flex justify-between items-end mb-20 border-b border-rose/10 pb-12">
-          <div>
-            <p className="text-rose text-[10px] uppercase tracking-[0.5em] font-bold mb-4">Espace Privilège</p>
-            <h1 className="font-display text-6xl font-light">Bienvenue, <span className="italic text-rose">{user?.nom}</span></h1>
-          </div>
-          <button onClick={logout} className="text-[10px] uppercase tracking-widest text-rose/30 hover:text-rose transition-colors border border-rose/10 px-6 py-3">
-            Déconnexion
-          </button>
-        </header>
+    <div className="min-h-screen bg-[#0D0800] text-[#F9F5F2] font-body flex flex-col">
 
-        <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-20">
-          
-          {/* SIDEBAR : PANIER ACTUEL */}
-          <div className="space-y-12">
-            <div>
-              <h3 className="text-rose text-[10px] uppercase tracking-[0.4em] font-bold mb-8">Panier Actuel</h3>
-              <div className="space-y-4">
-                {panier.length === 0 ? (
-                  <div className="glass-card p-10 text-center text-[10px] uppercase tracking-widest text-rose/20 border-dashed">
-                    Votre panier est vide
-                  </div>
-                ) : (
-                  <>
-                    {panier.map((item) => (
-                      <div key={item.id} className="glass-card p-6 border-rose/10 bg-rose/5 group">
-                        <div className="flex justify-between items-start mb-4">
-                          <div className="text-[9px] uppercase tracking-widest text-rose/40">{item.item_type}</div>
-                          <button onClick={() => supprimerDuPanier(item.id)} className="text-rose/20 hover:text-rose transition-colors">×</button>
-                        </div>
-                        <h4 className="font-display text-xl mb-1">{item.nom_personnalise || item.parfum_catalogue_nom || 'Parfum'}</h4>
-                        <div className="text-[10px] text-rose/60 mb-4">{item.ml}ml {item.gravure && `· "${item.gravure}"`}</div>
-                        <div className="text-rose font-bold">{item.prix.toLocaleString()} F</div>
-                      </div>
-                    ))}
-                    <div className="pt-6 border-t border-rose/10">
-                       <div className="flex justify-between items-center mb-8">
-                          <span className="text-[10px] uppercase tracking-widest text-rose/40">Total</span>
-                          <span className="text-2xl font-display text-rose">{panier.reduce((acc, i) => acc + i.prix * i.quantite, 0).toLocaleString()} F</span>
-                       </div>
-                       <button onClick={validerPanier} className="btn-gold w-full py-5 text-[10px]">Commander ({panier.length})</button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+      {/* ── HEADER ── */}
+      <nav className="sticky top-0 z-50 bg-[#0D0800]/90 backdrop-blur-md border-b border-white/5 px-5 py-4 flex justify-between items-center">
+        <Link href="/" className="font-display text-xl tracking-tighter hover:text-rose transition-colors">
+          MAYA <span className="italic font-light opacity-30">BAR</span>
+        </Link>
+        <button
+          onClick={handleLogout}
+          className="text-[10px] uppercase tracking-widest font-bold opacity-40 hover:opacity-100 transition-opacity px-3 py-2"
+        >
+          Déconnexion
+        </button>
+      </nav>
 
-            <div className="glass-card p-10 border-rose/10">
-              <h3 className="text-rose text-[10px] uppercase tracking-[0.4em] font-bold mb-6">Mon Profil</h3>
-              <p className="text-sm text-cream/40 mb-2">Email: {user?.email}</p>
-              <Link href="/configurateur" className="text-[9px] uppercase tracking-widest text-rose hover:text-rose-light">Refaire le quiz olfactif →</Link>
-            </div>
-          </div>
+      {/* ── HERO GREETING ── */}
+      <div className="px-5 pt-10 pb-6">
+        <motion.p
+          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          className="text-rose text-[10px] uppercase tracking-[0.4em] font-bold mb-2"
+        >
+          Espace Membre Privé
+        </motion.p>
+        <motion.h1
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          className="text-3xl font-display font-light leading-tight"
+        >
+          Bienvenue,{' '}
+          <span className="italic text-rose">{user?.nom}</span>
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
+          className="text-white/30 text-xs mt-2"
+        >
+          {user?.email}
+        </motion.p>
+      </div>
 
-          {/* MAIN : HISTORIQUE */}
-          <div className="space-y-12">
-            <h3 className="text-rose text-[10px] uppercase tracking-[0.4em] font-bold mb-8">Historique des Commandes</h3>
-            
-            {commandes.length === 0 ? (
-              <div className="glass-card p-20 text-center opacity-20 italic font-display text-2xl">
-                Votre galerie de créations est encore vide.
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {commandes.map((c) => (
-                  <motion.div 
-                    key={c.id}
-                    whileHover={{ x: 10, borderColor: 'rgba(188, 124, 124, 0.3)' }}
-                    className="glass-card p-8 flex flex-col md:flex-row justify-between items-start md:items-center border-rose/10 transition-all gap-8"
-                  >
-                    <div>
-                      <div className="text-[10px] text-rose/40 font-mono mb-2">#{c.reference} · {new Date(c.created_at).toLocaleDateString()}</div>
-                      <h4 className="text-2xl font-display mb-1">{c.parfum_catalogue_nom || "Mélange Signature"}</h4>
-                      <div className="flex gap-4 items-center">
-                         <div className={`text-[8px] uppercase tracking-widest px-2 py-1 border ${c.statut === 'livree' ? 'border-green-400/30 text-green-400' : 'border-rose/30 text-rose'}`}>
-                            {c.statut}
-                         </div>
-                         <div className="text-[10px] text-cream/30 uppercase tracking-widest">{c.ml}ml</div>
-                      </div>
-                    </div>
-                    <div className="text-right flex flex-col md:items-end gap-4 w-full md:w-auto">
-                       <div className="text-2xl font-display text-rose">{c.prix_total.toLocaleString()} F</div>
-                       <button 
-                        onClick={() => recommander(c)}
-                        disabled={submitting}
-                        className="text-[9px] uppercase tracking-widest bg-rose/10 text-rose border border-rose/20 px-8 py-3 hover:bg-rose hover:text-white transition-all"
-                       >
-                         {submitting ? '...' : 'RECOMMANDER'}
-                       </button>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </div>
-
-        </div>
-
-        <div className="mt-32 pt-12 border-t border-rose/10 text-center">
-          <Link href="/" className="text-[10px] uppercase tracking-[0.5em] text-rose/20 hover:text-rose transition-colors">
-            ← Retour à la boutique
-          </Link>
+      {/* ── TABS ── */}
+      <div className="px-5 mb-6">
+        <div className="flex gap-2 bg-white/5 p-1 rounded-2xl">
+          {(['commandes', 'panier'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all ${
+                activeTab === tab
+                  ? 'bg-rose text-white shadow-lg shadow-rose/20'
+                  : 'text-white/30 hover:text-white/60'
+              }`}
+            >
+              {tab === 'commandes' ? `Commandes (${orders.length})` : `Panier (${cart.length})`}
+            </button>
+          ))}
         </div>
       </div>
-    </main>
+
+      {/* ── CONTENT ── */}
+      <main className="flex-1 px-5 pb-28">
+        <AnimatePresence mode="wait">
+
+          {/* ── TAB: COMMANDES ── */}
+          {activeTab === 'commandes' && (
+            <motion.div
+              key="commandes"
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              className="space-y-4"
+            >
+              {orders.length === 0 ? (
+                <div className="py-20 text-center text-white/20 italic text-sm">
+                  Aucune commande pour le moment.
+                </div>
+              ) : orders.map((order, i) => {
+                const st = statusConfig[order.statut] || statusConfig['nouvelle']
+                return (
+                  <motion.div
+                    key={order.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.06 }}
+                    className="bg-white/[0.03] border border-white/[0.06] rounded-3xl p-5 space-y-4"
+                  >
+                    {/* Row 1: Reference + Status */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-rose font-bold uppercase tracking-widest">
+                        #{order.reference}
+                      </span>
+                      <span
+                        className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full"
+                        style={{ color: st.color, background: st.bg }}
+                      >
+                        {st.label}
+                      </span>
+                    </div>
+
+                    {/* Row 2: Perfume name + details */}
+                    <div>
+                      <h3 className="text-base font-display font-medium leading-snug">
+                        {order.parfum_catalogue_nom || 'Création Personnalisée'}
+                      </h3>
+                      <p className="text-[11px] text-white/30 uppercase tracking-widest mt-1">
+                        {new Date(order.created_at).toLocaleDateString('fr-FR', {
+                          day: '2-digit', month: 'long', year: 'numeric'
+                        })} · {order.ml}ml ·{' '}
+                        {order.mode_commande === 'catalogue' ? 'Catalogue' : 'Sur mesure'}
+                      </p>
+                      {order.gravure && (
+                        <p className="text-[11px] italic text-white/40 mt-1">✍️ "{order.gravure}"</p>
+                      )}
+                    </div>
+
+                    {/* Row 3: Price + Reorder */}
+                    <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                      <span className="text-lg font-display font-bold text-[#C9A84C]">
+                        {order.prix_total?.toLocaleString()} F
+                      </span>
+                      <button
+                        onClick={() => handleReorder(order)}
+                        className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-white/30 hover:text-rose transition-colors px-3 py-2 rounded-xl border border-white/10 hover:border-rose/30"
+                      >
+                        ↺ <span>Recommander</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                )
+              })}
+            </motion.div>
+          )}
+
+          {/* ── TAB: PANIER ── */}
+          {activeTab === 'panier' && (
+            <motion.div
+              key="panier"
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              className="space-y-4"
+            >
+              {cart.length === 0 ? (
+                <div className="py-20 text-center space-y-6">
+                  <p className="text-white/20 italic text-sm">Votre panier est vide.</p>
+                  <Link
+                    href="/configurateur"
+                    className="inline-block text-[10px] uppercase tracking-widest font-bold text-rose border border-rose/30 px-6 py-3 rounded-full hover:bg-rose hover:text-white transition-all"
+                  >
+                    Créer un parfum →
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  {cart.map((item, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.06 }}
+                      className="bg-white/[0.03] border border-white/[0.06] rounded-3xl p-5 flex items-center justify-between gap-4"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium truncate">
+                          {item.nom_personnalise || 'Mélange Personnalisé'}
+                        </div>
+                        <div className="text-[10px] text-white/30 uppercase tracking-widest mt-1">
+                          {item.ml}ml · {item.item_type?.replace('_', ' ')}
+                        </div>
+                        {item.gravure && (
+                          <div className="text-[10px] italic text-white/30 mt-0.5">✍️ "{item.gravure}"</div>
+                        )}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-sm font-display font-bold text-[#C9A84C]">
+                          {item.prix?.toLocaleString()} F
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+
+                  {/* TOTAL + CTA */}
+                  <div className="bg-rose/5 border border-rose/20 rounded-3xl p-5 space-y-5">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[11px] uppercase tracking-widest text-white/40 font-bold">Total</span>
+                      <span className="text-2xl font-display font-bold text-rose">
+                        {cartTotal.toLocaleString()} F
+                      </span>
+                    </div>
+                    <Link href="/checkout" className="block">
+                      <button className="w-full py-4 bg-rose text-white rounded-2xl font-bold text-[11px] uppercase tracking-widest hover:bg-[#A66B6B] transition-all active:scale-95">
+                        Commander maintenant →
+                      </button>
+                    </Link>
+                    <Link href="/configurateur" className="block text-center text-[10px] uppercase tracking-widest text-white/20 hover:text-white/60 transition-colors py-1">
+                      + Ajouter un parfum
+                    </Link>
+                  </div>
+                </>
+              )}
+            </motion.div>
+          )}
+
+        </AnimatePresence>
+      </main>
+
+      {/* ── BOTTOM NAV (mobile) ── */}
+      <div className="fixed bottom-0 left-0 right-0 bg-[#0D0800]/95 backdrop-blur-md border-t border-white/5 px-5 py-4 flex gap-3 z-50">
+        <Link href="/configurateur" className="flex-1">
+          <button className="w-full py-3 rounded-2xl border border-white/10 text-[10px] uppercase tracking-widest font-bold text-white/40 hover:text-rose hover:border-rose/30 transition-all">
+            ✦ Créer
+          </button>
+        </Link>
+        {cart.length > 0 && (
+          <Link href="/checkout" className="flex-1">
+            <button className="w-full py-3 rounded-2xl bg-rose text-white text-[10px] uppercase tracking-widest font-bold shadow-lg shadow-rose/20 active:scale-95 transition-all">
+              Commander ({cart.length})
+            </button>
+          </Link>
+        )}
+      </div>
+
+      <style jsx global>{`
+        body { -webkit-tap-highlight-color: transparent; }
+        * { -webkit-font-smoothing: antialiased; }
+      `}</style>
+    </div>
   )
 }

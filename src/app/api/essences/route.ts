@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import pool from '@/lib/db'
+import { getSession } from '@/lib/auth'
 
 const ESSENCES_FALLBACK = [
   { id: 1, nom: 'Rose de Damas', famille: 'Floral', note: 'cœur', couleur: '#E8A0B0', description: 'Rose intense et veloutée', actif: 1 },
@@ -32,10 +33,29 @@ export async function GET() {
     return NextResponse.json({ success: true, data: rows })
   } catch (error) {
     console.error('DB Error:', error)
-    // Fallback data if DB not connected
     return NextResponse.json({
       success: true,
       data: ESSENCES_FALLBACK
     })
+  }
+}
+
+export async function POST(request: Request) {
+  const session = await getSession()
+  if (!session || !session.isAdmin) {
+    return NextResponse.json({ success: false, error: 'Non autorisé' }, { status: 401 })
+  }
+  try {
+    const { nom, famille, note, couleur, image_url } = await request.json()
+    
+    const [result]: any = await pool.execute(
+      'INSERT INTO essences (nom, famille, note, couleur, image_url) VALUES (?, ?, ?, ?, ?)',
+      [nom, famille, note, couleur, image_url || null]
+    )
+
+    return NextResponse.json({ success: true, id: result.insertId })
+  } catch (error) {
+    console.error('DB POST Error:', error)
+    return NextResponse.json({ success: false, error: 'Erreur lors de l\'ajout' }, { status: 500 })
   }
 }

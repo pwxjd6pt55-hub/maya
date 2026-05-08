@@ -17,8 +17,8 @@ module.exports = {
         'maya-brown': '#3D2B1F',
       },
       fontFamily: {
-        display: ['Cormorant Garamond', 'Georgia', 'serif'],
-        body: ['Jost', 'sans-serif'],
+        display: ['var(--font-display)', 'serif'],
+        body: ['var(--font-body)', 'sans-serif'],
       },
     },
   },

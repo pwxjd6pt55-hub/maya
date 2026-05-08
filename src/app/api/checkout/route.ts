@@ -32,13 +32,16 @@ export async function POST(request: NextRequest) {
     for (const item of items) {
       const reference = `MB-${Math.random().toString(36).substring(2, 9).toUpperCase()}`
       
+      // Map item_type to the accepted ENUM values in DB ('catalogue' | 'melange')
+      const modeCommande = item.item_type === 'catalogue' ? 'catalogue' : 'melange'
+
       const [res]: any = await connection.execute(`
         INSERT INTO commandes 
           (reference, client_nom, client_telephone, client_email, mode_commande, parfum_catalogue_id, parfum_catalogue_nom, ml, prix_total, gravure, couleur_parfum, retrait, date_souhaitee)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         reference, client_nom, client_telephone, client_email, 
-        item.item_type, item.parfum_catalogue_id, item.nom_personnalise || 'Mélange', 
+        modeCommande, item.parfum_catalogue_id, item.nom_personnalise || 'Mélange', 
         item.ml, item.prix, item.gravure, item.couleur, retrait, date_souhaitee
       ])
 

@@ -1,14 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=Jost:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
+  --background: #0D0800;
+  --foreground: #F9F5F2;
   --rose: #BC7C7C;
-  --rose-light: #E29587;
+  --rose-light: #D4A3A3;
   --rose-dark: #8B5E5E;
-  --cream: #F7F1E8;
+  --brown: #2D1B1B;
+  --gold: #D4AF37;
+  --cream: #F9F5F2;
+  --font-display: 'Cormorant Garamond', serif;
+  --font-body: 'Outfit', sans-serif;
   --deep-brown: #0D0800;
   --warm-brown: #1A0F00;
   --maya-brown: #3D2B1F;
@@ -29,7 +35,8 @@ html {
 body {
   background-color: var(--deep-brown);
   color: var(--cream);
-  font-family: 'Jost', sans-serif;
+  font-family: 'Outfit', sans-serif;
+  font-size: 16px;
   overflow-x: hidden;
   position: relative;
 }
@@ -68,7 +75,7 @@ body::before {
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   padding: 1rem 3rem;
   border: none;
   cursor: pointer;
