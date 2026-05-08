@@ -129,9 +129,10 @@ export default function ConfiguratorElite() {
       } else {
         alert('Erreur : ' + (data.error || 'Impossible d''ajouter au panier'))
       }
-    } catch (e: any) { 
+    } catch (e: unknown) { 
+      const msg = e instanceof Error ? e.message : 'Erreur inconnue';
       console.error(e)
-      alert('Erreur réseau ou serveur : ' + e.message)
+      alert('Erreur réseau ou serveur : ' + msg)
     }
     setAdding(false)
   }

@@ -79,8 +79,9 @@ export async function POST(request: NextRequest) {
 
     return response
 
-  } catch (error: any) {
-    console.error('Auth error:', error)
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Erreur inconnue';
+    console.error('Auth error:', msg)
     return NextResponse.json({ error: 'Erreur lors de la connexion' }, { status: 500 })
   }
 }

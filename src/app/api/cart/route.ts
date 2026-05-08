@@ -67,9 +67,10 @@ export async function POST(request: NextRequest) {
 
     console.log('--- POST CART : Succès ! ---');
     return NextResponse.json({ success: true })
-  } catch (error: any) {
-    console.error('--- POST CART ERROR ---', error.message);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+    console.error('--- POST CART ERROR ---', errorMessage);
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 })
   }
 }
 

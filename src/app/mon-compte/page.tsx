@@ -35,7 +35,7 @@ export default function AccountElite() {
       ])
       if (resO.success) setOrders(resO.data || [])
       if (resC.success) setCart(resC.items || [])
-    } catch (e) { console.error(e) }
+    } catch (e: unknown) { console.error(e) }
     setLoading(false)
   }
 

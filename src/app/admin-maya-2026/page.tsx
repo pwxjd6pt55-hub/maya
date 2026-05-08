@@ -77,7 +77,7 @@ export default function AdminUltraPremium() {
       } else {
         setLoginError('Mot de passe incorrect')
       }
-    } catch {
+    } catch (error: unknown) {
       setLoginError('Erreur de connexion')
     }
     setLoginLoading(false)
@@ -98,7 +98,7 @@ export default function AdminUltraPremium() {
       if (resC?.success) setCommandes(resC.data)
       if (resU?.success) setClients(resU.data)
       if (resQ?.success) setQuizQuestions(resQ.data)
-    } catch (e) { console.error(e) }
+    } catch (e: unknown) { console.error(e) }
     setLoading(false)
   }
 
@@ -113,7 +113,7 @@ export default function AdminUltraPremium() {
         if (type === 'parfum') setNewParfum({ ...newParfum, image_url: data.url })
         else setNewEssence({ ...newEssence, image_url: data.url })
       }
-    } catch (e) { console.error(e) }
+    } catch (e: unknown) { console.error(e) }
     setUploading(false)
   }
 
@@ -287,8 +287,8 @@ export default function AdminUltraPremium() {
                         <div className="flex items-center gap-6">
                           <div className="w-12 h-12 rounded-full bg-rose/5 border border-rose/10 flex items-center justify-center font-display italic text-rose">M</div>
                           <div>
-                            <div className="text-sm font-medium tracking-wide">{c.client_nom} · {c.telephone}</div>
-                            <div className="text-[10px] text-white/20 uppercase tracking-widest mt-1">Ref: {c.reference} · {c.ville}</div>
+                            <div className="text-sm font-medium tracking-wide">{c.client_nom} · {c.client_telephone}</div>
+                            <div className="text-[10px] text-white/20 uppercase tracking-widest mt-1">Ref: {c.reference} · {c.retrait}</div>
                           </div>
                         </div>
                         <div className="text-right">
