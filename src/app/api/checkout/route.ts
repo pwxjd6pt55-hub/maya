@@ -73,10 +73,11 @@ export async function POST(request: NextRequest) {
     console.log('--- CHECKOUT : Succès final ! ---', createdReferences);
     return NextResponse.json({ success: true, references: createdReferences, reference: createdReferences[0] })
 
-  } catch (error) {
+  } catch (error: unknown) {
     await client.query('ROLLBACK')
-    console.error('Checkout error:', error)
-    return NextResponse.json({ success: false, error: 'Erreur lors du checkout' }, { status: 500 })
+    const msg = error instanceof Error ? error.message : 'Erreur inconnue';
+    console.error('Checkout error:', msg)
+    return NextResponse.json({ success: false, error: msg }, { status: 500 })
   } finally {
     client.release()
   }
