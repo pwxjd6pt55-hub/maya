@@ -18,6 +18,8 @@ export async function POST(request: NextRequest) {
         name: 'session',
         value: session,
         httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
         expires: expires,
         path: '/',
       })
@@ -26,6 +28,8 @@ export async function POST(request: NextRequest) {
         name: 'admin_session',
         value: session,
         httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
         expires: expires,
         path: '/',
       })
@@ -67,6 +71,8 @@ export async function POST(request: NextRequest) {
       name: 'session',
       value: session,
       httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
       expires: expires,
       path: '/',
     })
