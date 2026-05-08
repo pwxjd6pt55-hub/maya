@@ -111,6 +111,8 @@ export default function MayaHome() {
               { href: '#collection', label: 'Collection' },
               { href: '/configurateur', label: 'Le Bar' },
               { href: '/mon-compte', label: 'Mon Compte' },
+              { href: '/connexion', label: 'Connexion' },
+              { href: '/inscription', label: 'Inscription' },
             ].map(link => (
               <Link
                 key={link.href}
@@ -161,14 +163,22 @@ export default function MayaHome() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1, duration: 1 }}
-            className="flex flex-col gap-8 sm:gap-10 justify-center items-center mt-10"
+            className="flex flex-col gap-6 justify-center items-center mt-10"
            >
              <Link href="/configurateur" className="w-full max-w-xs sm:max-w-sm">
                <button className="btn-gold w-full py-4 sm:py-6 text-[10px] sm:text-[11px]">DÉMARRER VOTRE CRÉATION</button>
              </Link>
-             <a href="#collection" className="w-full max-w-xs sm:max-w-sm">
-                <button className="bg-transparent border border-white/10 text-white tracking-[0.3em] sm:tracking-[0.4em] uppercase text-[10px] py-4 sm:py-5 px-6 hover:bg-white/5 transition-all w-full">Explorer la Collection</button>
-             </a>
+             
+             <div className="flex gap-4 w-full max-w-xs sm:max-w-sm">
+               <Link href="/connexion" className="flex-1">
+                  <button className="bg-white/5 border border-white/10 text-white tracking-[0.2em] uppercase text-[9px] py-4 px-4 hover:bg-white/10 transition-all w-full rounded-full">Connexion</button>
+               </Link>
+               <Link href="/inscription" className="flex-1">
+                  <button className="bg-rose text-white tracking-[0.2em] uppercase text-[9px] py-4 px-4 hover:bg-rose/80 transition-all w-full rounded-full">Inscription</button>
+               </Link>
+             </div>
+
+             <a href="#collection" className="text-[9px] uppercase tracking-[0.4em] opacity-40 hover:opacity-100 transition-opacity mt-4 italic">Explorer la Collection</a>
            </motion.div>
         </div>
 
