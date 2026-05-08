@@ -127,12 +127,12 @@ export default function ConfiguratorElite() {
       } else if (data.authenticated === false) {
         window.location.href = '/connexion'
       } else {
-        alert('Erreur : ' + (data.error || 'Impossible d''ajouter au panier'))
+        alert("Erreur : " + (data.error || "Impossible d'ajouter au panier"))
       }
     } catch (e: unknown) { 
-      const msg = e instanceof Error ? e.message : 'Erreur inconnue';
+      const msg = e instanceof Error ? e.message : "Erreur inconnue";
       console.error(e)
-      alert('Erreur réseau ou serveur : ' + msg)
+      alert("Erreur réseau ou serveur : " + msg)
     }
     setAdding(false)
   }
