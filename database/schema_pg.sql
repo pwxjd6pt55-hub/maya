@@ -61,6 +61,7 @@ CREATE TABLE commandes (
   client_nom VARCHAR(150),
   client_telephone VARCHAR(20),
   client_email VARCHAR(150),
+  client_adresse TEXT,
   
   mode_commande VARCHAR(50) CHECK (mode_commande IN ('catalogue', 'melange', 'melange_essences', 'melange_parfums')),
   parfum_catalogue_id INT REFERENCES parfums_catalogue(id) ON DELETE SET NULL,
@@ -72,7 +73,7 @@ CREATE TABLE commandes (
   
   prix_total INT DEFAULT 0,
   statut VARCHAR(30) DEFAULT 'nouvelle' CHECK (statut IN ('nouvelle', 'en_preparation', 'prete', 'livree', 'annulee')),
-  retrait VARCHAR(20) CHECK (retrait IN ('boutique', 'livraison')),
+  retrait VARCHAR(20) CHECK (retrait IN ('OUI', 'NON')),
   date_souhaitee VARCHAR(50),
   notes_admin TEXT,
   

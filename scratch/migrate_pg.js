@@ -3,8 +3,17 @@ const fs = require('fs');
 const path = require('path');
 
 async function migrate() {
-  const connectionString = process.env.DATABASE_URL;
+  // Chargement manuel de .env.local
+  const envPath = path.join(__dirname, '..', '.env.local');
+  if (fs.existsSync(envPath)) {
+    const envConfig = fs.readFileSync(envPath, 'utf8');
+    envConfig.split('\n').forEach(line => {
+      const [key, value] = line.split('=');
+      if (key && value) process.env[key.trim()] = value.trim().replace(/^["']|["']$/g, '');
+    });
+  }
 
+  const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
     console.error('ERREUR : La variable DATABASE_URL est manquante dans .env.local');
     process.exit(1);

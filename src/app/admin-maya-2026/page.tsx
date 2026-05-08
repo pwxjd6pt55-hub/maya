@@ -288,6 +288,7 @@ export default function AdminUltraPremium() {
                           <div className="w-12 h-12 rounded-full bg-rose/5 border border-rose/10 flex items-center justify-center font-display italic text-rose">M</div>
                           <div>
                             <div className="text-sm font-medium tracking-wide">{c.client_nom} · {c.client_telephone}</div>
+                            <div className="text-[10px] text-white/40 italic mt-0.5">{c.client_adresse || 'Pas d\'adresse'}</div>
                             <div className="text-[10px] text-white/20 uppercase tracking-widest mt-1">Ref: {c.reference} · {c.retrait}</div>
                           </div>
                         </div>
