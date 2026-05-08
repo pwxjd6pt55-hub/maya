@@ -28,7 +28,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { item_type, parfum_catalogue_id, nom_personnalise, ml, prix, quantite, gravure, couleur, essences_json, parfums_json } = body
+    let { item_type, parfum_catalogue_id, nom_personnalise, ml, prix, quantite, gravure, couleur, essences_json, parfums_json } = body
+    if (item_type === 'melange') item_type = 'melange_essences'
 
     // 1. Get or Create Cart
     let [panier]: any = await pool.execute('SELECT id FROM panier WHERE user_id = ?', [session.userId])

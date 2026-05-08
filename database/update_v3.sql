@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS panier (
 CREATE TABLE IF NOT EXISTS panier_items (
   id INT AUTO_INCREMENT PRIMARY KEY,
   panier_id INT NOT NULL,
-  item_type ENUM('catalogue', 'melange_essences', 'melange_parfums') NOT NULL,
+  item_type ENUM('catalogue', 'melange', 'melange_essences', 'melange_parfums') NOT NULL,
   parfum_catalogue_id INT, -- Si type catalogue ou mélange parfums
   nom_personnalise VARCHAR(150), -- Pour les mélanges
   ml INT NOT NULL,

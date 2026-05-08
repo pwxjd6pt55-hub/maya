@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
           nom || 'Client Maya',
           telephone,
           email || null,
-          item.item_type === 'catalogue' ? 'catalogue' : 'melange',
+          item.item_type || 'melange',
           item.parfum_catalogue_id || null,
           item.nom_personnalise || null,
           item.ml || 50,
