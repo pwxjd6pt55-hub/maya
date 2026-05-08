@@ -48,22 +48,19 @@ export async function POST(request: NextRequest) {
 
       createdReferences.push(reference)
 
-      console.log('--- CHECKOUT : Envoi email pour ---', reference);
-      try {
-        await envoyerEmailsCommande({
-          id: reference,
-          clientNom: client_nom,
-          clientTel: client_telephone,
-          clientEmail: client_email,
-          parfum: item.nom_personnalise || item.parfum_catalogue_nom || 'Mélange',
-          contenance: `${item.ml}ml`,
-          prix: item.prix,
-          type: item.item_type,
-          dateCommande: new Date().toLocaleDateString()
-        })
-      } catch (e) {
-        console.error('--- CHECKOUT : Erreur email ignorée ---', e);
-      }
+      console.log('--- CHECKOUT : Envoi email (arrière-plan) pour ---', reference);
+      // On ne met pas 'await' ici pour ne pas bloquer le client si l'email est lent
+      envoyerEmailsCommande({
+        id: reference,
+        clientNom: client_nom,
+        clientTel: client_telephone,
+        clientEmail: client_email,
+        parfum: item.nom_personnalise || item.parfum_catalogue_nom || 'Mélange',
+        contenance: `${item.ml}ml`,
+        prix: item.prix,
+        type: item.item_type,
+        dateCommande: new Date().toLocaleDateString()
+      }).catch(e => console.error('--- CHECKOUT : Erreur email arrière-plan ---', e));
     }
 
     // 3. Clear Cart

@@ -143,6 +143,9 @@ export async function envoyerEmailsCommande(cmd: CommandeEmailData): Promise<{
       user: process.env.GMAIL_USER,
       pass: process.env.GMAIL_APP_PASSWORD,
     },
+    connectionTimeout: 5000, // 5 secondes max pour se connecter
+    greetingTimeout: 5000,
+    socketTimeout: 5000,
   });
 
   const adminEmail = process.env.ADMIN_EMAIL || process.env.GMAIL_USER || "kougnimag@gmail.com";
