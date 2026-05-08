@@ -38,10 +38,10 @@ export async function POST(request: NextRequest) {
 
       await client.query(`
         INSERT INTO commandes 
-          (reference, client_nom, client_telephone, client_email, client_adresse, mode_commande, parfum_catalogue_id, parfum_catalogue_nom, ml, prix_total, gravure, couleur_parfum, retrait, date_souhaitee)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+          (reference, user_id, client_nom, client_telephone, client_email, client_adresse, mode_commande, parfum_catalogue_id, parfum_catalogue_nom, ml, prix_total, gravure, couleur_parfum, retrait, date_souhaitee)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       `, [
-        reference, client_nom, client_telephone, client_email, adresse || null,
+        reference, session.userId, client_nom, client_telephone, client_email, adresse || null,
         modeCommande, item.parfum_catalogue_id, item.nom_personnalise || 'Mélange', 
         item.ml, item.prix, item.gravure, item.couleur, retrait, date_souhaitee
       ])

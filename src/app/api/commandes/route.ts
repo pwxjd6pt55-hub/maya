@@ -6,11 +6,13 @@ import { envoyerEmailsCommande } from "@/lib/email";
 export async function GET(request: NextRequest) {
   const session = await getSession();
   try {
+    let query = `SELECT * FROM commandes`;
     const params: any[] = [];
-    let query = `SELECT * FROM commandes WHERE 1=1`;
+    
+    // Si ce n'est pas un admin, on filtre par son propre ID
     if (!session || session.role !== 'admin') {
       if (!session) return NextResponse.json({ success: true, data: [] });
-      query += ` AND user_id = $${params.length + 1} `;
+      query += ` WHERE user_id = $1`;
       params.push(session.userId);
     }
     query += " ORDER BY created_at DESC";
