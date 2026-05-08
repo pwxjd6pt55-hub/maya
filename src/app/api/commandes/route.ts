@@ -4,19 +4,9 @@ import { getSession } from "@/lib/auth";
 import { envoyerEmailsCommande } from "@/lib/email";
 
 export async function GET(request: NextRequest) {
-  const session = await getSession();
-  try {
-    let query = `SELECT * FROM commandes`;
-    const params: any[] = [];
-    
-    // Si ce n'est pas un admin, on filtre par son propre ID
-    if (!session || session.role !== 'admin') {
-      if (!session) return NextResponse.json({ success: true, data: [] });
-      query += ` WHERE user_id = $1`;
-      params.push(session.userId);
-    }
-    query += " ORDER BY created_at DESC";
-    const { rows } = await pool.query(query, params);
+    // DEBUG : On affiche tout sans filtre pour comprendre
+    const { rows } = await pool.query("SELECT * FROM commandes ORDER BY created_at DESC");
+    console.log(`--- API COMMANDES : ${rows.length} commandes trouvées ---`);
     return NextResponse.json({ success: true, data: rows });
   } catch (error) {
     console.error("DB Error:", error);
