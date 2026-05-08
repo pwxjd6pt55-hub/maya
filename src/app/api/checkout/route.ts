@@ -7,38 +7,35 @@ export async function POST(request: NextRequest) {
   const session = await getSession()
   if (!session || !session.userId) return NextResponse.json({ authenticated: false }, { status: 401 })
 
-  const connection = await pool.getConnection()
-  await connection.beginTransaction()
-
+  const client = await pool.connect()
   try {
+    await client.query('BEGIN')
     const { retrait, date_souhaitee, client_nom, client_telephone, client_email } = await request.json()
 
     // 1. Get Cart Items
-    const [panier]: any = await connection.execute('SELECT id FROM panier WHERE user_id = ?', [session.userId])
+    const { rows: panier } = await client.query('SELECT id FROM panier WHERE user_id = $1', [session.userId])
     if (panier.length === 0) {
-      await connection.rollback()
+      await client.query('ROLLBACK')
       return NextResponse.json({ error: 'Panier vide' }, { status: 400 })
     }
 
-    const [items]: any = await connection.execute('SELECT * FROM panier_items WHERE panier_id = ?', [panier[0].id])
+    const { rows: items } = await client.query('SELECT * FROM panier_items WHERE panier_id = $1', [panier[0].id])
     if (items.length === 0) {
-      await connection.rollback()
+      await client.query('ROLLBACK')
       return NextResponse.json({ error: 'Panier vide' }, { status: 400 })
     }
 
     const createdReferences = []
 
-    // 2. Create Orders for each item (or one order with multiple items - here we follow the existing 'commandes' schema which is 1 order = 1 parfum)
+    // 2. Create Orders
     for (const item of items) {
       const reference = `MB-${Math.random().toString(36).substring(2, 9).toUpperCase()}`
-      
-      // Map item_type to the accepted ENUM values in DB ('catalogue' | 'melange')
       const modeCommande = item.item_type === 'catalogue' ? 'catalogue' : 'melange'
 
-      const [res]: any = await connection.execute(`
+      await client.query(`
         INSERT INTO commandes 
           (reference, client_nom, client_telephone, client_email, mode_commande, parfum_catalogue_id, parfum_catalogue_nom, ml, prix_total, gravure, couleur_parfum, retrait, date_souhaitee)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       `, [
         reference, client_nom, client_telephone, client_email, 
         modeCommande, item.parfum_catalogue_id, item.nom_personnalise || 'Mélange', 
@@ -47,7 +44,6 @@ export async function POST(request: NextRequest) {
 
       createdReferences.push(reference)
 
-      // Send email (optional: one summary email would be better, but here we trigger for each)
       await envoyerEmailsCommande({
         id: reference,
         clientNom: client_nom,
@@ -62,16 +58,16 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. Clear Cart
-    await connection.execute('DELETE FROM panier_items WHERE panier_id = ?', [panier[0].id])
+    await client.query('DELETE FROM panier_items WHERE panier_id = $1', [panier[0].id])
     
-    await connection.commit()
+    await client.query('COMMIT')
     return NextResponse.json({ success: true, references: createdReferences })
 
   } catch (error) {
-    await connection.rollback()
+    await client.query('ROLLBACK')
     console.error('Checkout error:', error)
     return NextResponse.json({ success: false, error: 'Erreur lors du checkout' }, { status: 500 })
   } finally {
-    connection.release()
+    client.release()
   }
 }

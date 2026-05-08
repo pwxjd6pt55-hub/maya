@@ -10,11 +10,11 @@ export async function GET(request: NextRequest) {
     let query = `SELECT * FROM commandes WHERE 1=1`;
     if (!session || session.role !== 'admin') {
       if (!session) return NextResponse.json({ success: true, data: [] });
-      query += " AND user_id = ? ";
+      query += ` AND user_id = $${params.length + 1} `;
       params.push(session.userId);
     }
     query += " ORDER BY created_at DESC";
-    const [rows] = await pool.execute(query, params);
+    const { rows } = await pool.query(query, params);
     return NextResponse.json({ success: true, data: rows });
   } catch (error) {
     console.error("DB Error:", error);
@@ -40,11 +40,11 @@ export async function POST(request: NextRequest) {
       const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
       const reference = `MB-${datePart}-${randomPart}`;
 
-      await pool.execute(
+      await pool.query(
         `INSERT INTO commandes 
           (reference, user_id, client_nom, client_telephone, client_email, mode_commande, 
            parfum_catalogue_id, parfum_catalogue_nom, ml, gravure, prix_total, statut, retrait)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'nouvelle', ?)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'nouvelle', $12)`,
         [
           reference,
           session?.userId || null,
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const { id, statut } = await request.json();
-    await pool.execute("UPDATE commandes SET statut = ? WHERE id = ?", [statut, id]);
+    await pool.query("UPDATE commandes SET statut = $1 WHERE id = $2", [statut, id]);
     return NextResponse.json({ success: true });
   } catch (e) { return NextResponse.json({ success: false }, { status: 500 }); }
 }

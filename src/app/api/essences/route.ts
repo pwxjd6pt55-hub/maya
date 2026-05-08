@@ -27,7 +27,7 @@ const ESSENCES_FALLBACK = [
 
 export async function GET() {
   try {
-    const [rows] = await pool.execute(
+    const { rows } = await pool.query(
       'SELECT * FROM essences ORDER BY famille, nom'
     )
     return NextResponse.json({ success: true, data: rows })
@@ -48,12 +48,12 @@ export async function POST(request: Request) {
   try {
     const { nom, famille, note, couleur, image_url } = await request.json()
     
-    const [result]: any = await pool.execute(
-      'INSERT INTO essences (nom, famille, note, couleur, image_url) VALUES (?, ?, ?, ?, ?)',
+    const result = await pool.query(
+      'INSERT INTO essences (nom, famille, note, couleur, image_url) VALUES ($1, $2, $3, $4, $5) RETURNING id',
       [nom, famille, note, couleur, image_url || null]
     )
 
-    return NextResponse.json({ success: true, id: result.insertId })
+    return NextResponse.json({ success: true, id: result.rows[0].id })
   } catch (error) {
     console.error('DB POST Error:', error)
     return NextResponse.json({ success: false, error: 'Erreur lors de l\'ajout' }, { status: 500 })

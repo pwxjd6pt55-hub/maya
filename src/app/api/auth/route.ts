@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email et mot de passe requis' }, { status: 400 })
     }
 
-    const [users]: any = await pool.execute('SELECT * FROM users WHERE email = ?', [email])
+    const { rows: users } = await pool.query('SELECT * FROM users WHERE email = $1', [email])
     if (users.length === 0) {
       return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 401 })
     }

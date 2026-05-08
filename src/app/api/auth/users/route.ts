@@ -9,7 +9,7 @@ export async function GET() {
   }
 
   try {
-    const [rows]: any = await pool.execute('SELECT id, nom, email, created_at FROM users WHERE role = "client" ORDER BY created_at DESC')
+    const { rows } = await pool.query("SELECT id, nom, email, created_at FROM users WHERE role = 'client' ORDER BY created_at DESC")
     return NextResponse.json({ success: true, data: rows })
   } catch (error) {
     console.error(error)

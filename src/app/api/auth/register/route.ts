@@ -12,8 +12,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Tous les champs sont requis' }, { status: 400 })
     }
 
-    // Vérifier si l'utilisateur existe déjà
-    const [existing]: any = await pool.execute('SELECT id FROM users WHERE email = ?', [email])
+    const { rows: existing } = await pool.query('SELECT id FROM users WHERE email = $1', [email])
     if (existing.length > 0) {
       return NextResponse.json({ error: 'Cet email est déjà utilisé' }, { status: 400 })
     }
@@ -22,12 +21,12 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 10)
 
     // Créer l'utilisateur
-    const [result]: any = await pool.execute(
-      'INSERT INTO users (nom, email, password_hash, role) VALUES (?, ?, ?, ?)',
+    const result = await pool.query(
+      'INSERT INTO users (nom, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id',
       [nom, email, hashedPassword, 'client']
     )
 
-    const userId = result.insertId
+    const userId = result.rows[0].id
 
     // Créer la session
     const expires = new Date(Date.now() + 120 * 60 * 1000) // 2 heures

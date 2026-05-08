@@ -24,7 +24,7 @@ import { getSession } from '@/lib/auth'
 
 export async function GET() {
   try {
-    const [rows] = await pool.execute(
+    const { rows } = await pool.query(
       'SELECT * FROM parfums_catalogue ORDER BY famille, nom'
     )
     return NextResponse.json({ success: true, data: rows })
@@ -41,12 +41,13 @@ export async function POST(request: NextRequest) {
     const { nom, marque_inspiree, famille, notes_tete, notes_coeur, notes_fond, prix_30ml, prix_50ml, prix_100ml, image_url } = data
     
     try {
-      const [result] = await pool.execute(`
+      const result = await pool.query(`
         INSERT INTO parfums_catalogue 
           (nom, marque_inspiree, famille, notes_tete, notes_coeur, notes_fond, prix_30ml, prix_50ml, prix_100ml, image_url)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id
       `, [nom, marque_inspiree || '', famille || '', notes_tete || '', notes_coeur || '', notes_fond || '', prix_30ml || 0, prix_50ml || 0, prix_100ml || 0, image_url || null])
-      return NextResponse.json({ success: true, id: (result as any).insertId })
+      return NextResponse.json({ success: true, id: result.rows[0].id })
     } catch(dbErr) {
       // Fallback mode
       const newId = PARFUMS_FALLBACK.length ? Math.max(...PARFUMS_FALLBACK.map(p => p.id)) + 1 : 1
@@ -66,10 +67,10 @@ export async function PATCH(request: NextRequest) {
     const { id, nom, marque_inspiree, famille, notes_tete, notes_coeur, notes_fond, prix_30ml, prix_50ml, prix_100ml, image_url } = data
     
     try {
-      await pool.execute(`
+      await pool.query(`
         UPDATE parfums_catalogue 
-        SET nom=?, marque_inspiree=?, famille=?, notes_tete=?, notes_coeur=?, notes_fond=?, prix_30ml=?, prix_50ml=?, prix_100ml=?, image_url=?
-        WHERE id=?
+        SET nom=$1, marque_inspiree=$2, famille=$3, notes_tete=$4, notes_coeur=$5, notes_fond=$6, prix_30ml=$7, prix_50ml=$8, prix_100ml=$9, image_url=$10
+        WHERE id=$11
       `, [nom, marque_inspiree, famille, notes_tete, notes_coeur, notes_fond, prix_30ml, prix_50ml, prix_100ml, image_url, id])
       return NextResponse.json({ success: true })
     } catch(dbErr) {
@@ -94,7 +95,7 @@ export async function DELETE(request: NextRequest) {
     if (!id) return NextResponse.json({ success: false }, { status: 400 })
     
     try {
-      await pool.execute('DELETE FROM parfums_catalogue WHERE id = ?', [id])
+      await pool.query('DELETE FROM parfums_catalogue WHERE id = $1', [id])
       return NextResponse.json({ success: true })
     } catch(dbErr) {
       PARFUMS_FALLBACK = PARFUMS_FALLBACK.filter(p => p.id !== parseInt(id))
