@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import { Resend } from 'resend';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface CommandeEmailData {
@@ -16,8 +16,7 @@ export interface CommandeEmailData {
   dateCommande: string;
 }
 
-const PRIMARY_COLOR = "#BC7C7C";
-const SECONDARY_COLOR = "#3D2B1F";
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ─── Template email ADMIN ─────────────────────────────────────────────────────
 function templateAdmin(cmd: CommandeEmailData): string {
@@ -136,73 +135,46 @@ export async function envoyerEmailsCommande(cmd: CommandeEmailData): Promise<{
   clientSent: boolean;
   error?: string;
 }> {
-  console.log('--- EMAIL : Tentative d\'envoi via', process.env.GMAIL_USER, '---');
+  console.log('--- EMAIL : Tentative d\'envoi via RESEND ---');
 
-  // Configuration Nodemailer alternative (Port 587 est souvent plus ouvert)
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // false pour port 587
-    auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASSWORD,
-    },
-    tls: {
-      rejectUnauthorized: false // Aide à passer certains blocages réseau
-    },
-    connectionTimeout: 10000, 
-    greetingTimeout: 10000,
-    socketTimeout: 10000,
-  });
-
-  try {
-    console.log('--- EMAIL : Vérification de la connexion SMTP... ---');
-    await transporter.verify();
-    console.log('--- EMAIL : Connexion SMTP OK ! ---');
-  } catch (err: any) {
-    console.error('--- EMAIL : Échec de la connexion SMTP ---', err.message);
-    return { success: false, adminSent: false, clientSent: false, error: `SMTP Connection failed: ${err.message}` };
-  }
-
-  const adminEmail = process.env.ADMIN_EMAIL || process.env.GMAIL_USER || "kougnimag@gmail.com";
+  const adminEmail = process.env.ADMIN_EMAIL || "kougnimag@gmail.com";
   let adminSent = false;
   let clientSent = false;
 
   try {
     // 1. Email à l'admin
-    if (adminEmail) {
-      await transporter.sendMail({
-        from: `"Maya Bar" <${process.env.GMAIL_USER}>`,
-        to: adminEmail,
-        subject: `✨ NOUVELLE COMMANDE #${cmd.id} — ${cmd.clientNom} — ${cmd.prix} F`,
-        html: templateAdmin(cmd),
-      });
+    const dataAdmin = await resend.emails.send({
+      from: 'Maya Bar <onboarding@resend.dev>', // Note: Utiliser ton domaine si tu en as un
+      to: adminEmail,
+      subject: `✨ NOUVELLE COMMANDE #${cmd.id} — ${cmd.clientNom}`,
+      html: templateAdmin(cmd),
+    });
+    
+    if (dataAdmin.error) {
+      console.error("Resend Admin Error:", dataAdmin.error);
+    } else {
       adminSent = true;
     }
 
     // 2. Email au client
     if (cmd.clientEmail) {
-      try {
-        await transporter.sendMail({
-          from: `"Maya Bar" <${process.env.GMAIL_USER}>`,
-          to: cmd.clientEmail,
-          subject: `Votre Signature Maya Bar est réservée — #${cmd.id}`,
-          html: templateClient(cmd),
-        });
-        clientSent = true;
-      } catch (e) {
-        console.warn("Client email failed:", e);
-      }
+      const dataClient = await resend.emails.send({
+        from: 'Maya Bar <onboarding@resend.dev>',
+        to: cmd.clientEmail,
+        subject: `Votre Signature Maya Bar est réservée — #${cmd.id}`,
+        html: templateClient(cmd),
+      });
+      if (!dataClient.error) clientSent = true;
     }
 
     return { success: true, adminSent, clientSent };
-  } catch (error) {
-    console.error("Erreur envoi email via Nodemailer:", error);
+  } catch (error: any) {
+    console.error("Erreur RESEND:", error);
     return {
       success: false,
       adminSent,
       clientSent,
-      error: error instanceof Error ? error.message : "Erreur inconnue",
+      error: error.message,
     };
   }
 }
