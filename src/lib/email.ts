@@ -138,14 +138,17 @@ export async function envoyerEmailsCommande(cmd: CommandeEmailData): Promise<{
 }> {
   console.log('--- EMAIL : Tentative d\'envoi via', process.env.GMAIL_USER, '---');
 
-  // Configuration Nodemailer plus robuste pour Gmail
+  // Configuration Nodemailer alternative (Port 587 est souvent plus ouvert)
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // true pour port 465
+    port: 587,
+    secure: false, // false pour port 587
     auth: {
       user: process.env.GMAIL_USER,
       pass: process.env.GMAIL_APP_PASSWORD,
+    },
+    tls: {
+      rejectUnauthorized: false // Aide à passer certains blocages réseau
     },
     connectionTimeout: 10000, 
     greetingTimeout: 10000,
