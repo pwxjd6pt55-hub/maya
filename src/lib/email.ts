@@ -16,7 +16,8 @@ export interface CommandeEmailData {
   dateCommande: string;
 }
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const PRIMARY_COLOR = "#BC7C7C";
+const SECONDARY_COLOR = "#3D2B1F";
 
 // ─── Template email ADMIN ─────────────────────────────────────────────────────
 function templateAdmin(cmd: CommandeEmailData): string {
@@ -137,6 +138,12 @@ export async function envoyerEmailsCommande(cmd: CommandeEmailData): Promise<{
 }> {
   console.log('--- EMAIL : Tentative d\'envoi via RESEND ---');
 
+  if (!process.env.RESEND_API_KEY) {
+    console.error("ERREUR: RESEND_API_KEY manquante dans les variables d'environnement.");
+    return { success: false, adminSent: false, clientSent: false, error: "Clé API Resend manquante" };
+  }
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const adminEmail = process.env.ADMIN_EMAIL || "kougnimag@gmail.com";
   let adminSent = false;
   let clientSent = false;
