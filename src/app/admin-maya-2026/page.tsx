@@ -215,16 +215,26 @@ export default function AdminUltraPremium() {
   return (
     <div className="min-h-screen bg-[#0D0800] text-[#F9F5F2] font-body selection:bg-rose/40">
       
+      {/* ── MOBILE HEADER ── */}
+      <div className="lg:hidden fixed top-0 w-full z-[101] bg-[#0D0800]/90 backdrop-blur-xl border-b border-rose/10 px-6 py-4 flex justify-between items-center">
+        <h1 className="font-display text-xl tracking-tighter">MAYA <span className="italic font-light opacity-30">ADMIN</span></h1>
+        <button onClick={() => setMenuOpen(!menuOpen)} className="w-10 h-10 flex flex-col justify-center items-center gap-1.5">
+          <span className={`block w-6 h-[1px] bg-white transition-all ${menuOpen ? 'rotate-45 translate-y-1' : ''}`} />
+          <span className={`block w-6 h-[1px] bg-white transition-all ${menuOpen ? 'opacity-0' : ''}`} />
+          <span className={`block w-6 h-[1px] bg-white transition-all ${menuOpen ? '-rotate-45 -translate-y-2.5' : ''}`} />
+        </button>
+      </div>
+
       {/* ── SIDEBAR NAVIGATION ── */}
-      <nav className="fixed left-0 top-0 bottom-0 w-80 bg-[#120D0A]/50 backdrop-blur-3xl border-r border-rose/10 z-50 flex flex-col p-12">
-        <div className="mb-20 text-center">
+      <nav className={`fixed left-0 top-0 bottom-0 w-72 sm:w-80 bg-[#120D0A]/95 backdrop-blur-3xl border-r border-rose/10 z-[100] flex flex-col p-8 sm:p-12 transition-transform duration-500 lg:translate-x-0 ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="mb-12 sm:mb-20 text-center mt-10 lg:mt-0">
           <Link href="/" className="group block">
-            <h1 className="font-display text-4xl tracking-tighter group-hover:text-rose transition-colors duration-500">MAYA <span className="italic font-light opacity-30 group-hover:opacity-100 transition-all">BAR</span></h1>
-            <p className="text-[9px] uppercase tracking-[0.5em] text-rose/40 mt-2 font-bold">Luxury Perfumery Management</p>
+            <h1 className="font-display text-3xl sm:text-4xl tracking-tighter group-hover:text-rose transition-colors duration-500">MAYA <span className="italic font-light opacity-30 group-hover:opacity-100 transition-all">BAR</span></h1>
+            <p className="text-[8px] uppercase tracking-[0.5em] text-rose/40 mt-2 font-bold text-center">Luxury Management</p>
           </Link>
         </div>
 
-        <div className="flex-1 space-y-4">
+        <div className="flex-1 space-y-3 sm:space-y-4">
           {[
             { id: 'dashboard', label: 'Vue d\'ensemble', icon: '🍷' },
             { id: 'catalog', label: 'Collection Privée', icon: '🏺' },
@@ -234,33 +244,33 @@ export default function AdminUltraPremium() {
           ].map((item) => (
             <button
               key={item.id}
-              onClick={() => setTab(item.id as any)}
-              className={`w-full group flex items-center gap-5 px-8 py-5 rounded-2xl transition-all duration-500 ${tab === item.id ? 'bg-gradient-to-r from-rose to-rose-dark text-white shadow-2xl shadow-rose/20 scale-105' : 'hover:bg-white/5 text-white/40'}`}
+              onClick={() => { setTab(item.id as any); setMenuOpen(false); }}
+              className={`w-full group flex items-center gap-4 px-6 py-4 rounded-xl transition-all duration-500 ${tab === item.id ? 'bg-gradient-to-r from-rose to-rose-dark text-white shadow-xl shadow-rose/20 scale-105' : 'hover:bg-white/5 text-white/40'}`}
             >
-              <span className={`text-xl transition-transform duration-500 ${tab === item.id ? 'scale-110' : 'group-hover:translate-x-1'}`}>{item.icon}</span>
-              <span className="text-xs uppercase tracking-[0.2em] font-bold">{item.label}</span>
+              <span className={`text-lg transition-transform duration-500 ${tab === item.id ? 'scale-110' : 'group-hover:translate-x-1'}`}>{item.icon}</span>
+              <span className="text-[10px] uppercase tracking-[0.2em] font-bold">{item.label}</span>
             </button>
           ))}
         </div>
 
-        <div className="pt-10 border-t border-rose/10">
-          <button onClick={() => window.location.href = '/'} className="w-full py-4 text-[10px] uppercase tracking-widest text-white/20 hover:text-rose transition-colors flex items-center justify-center gap-3">
-             <span>←</span> Retourner au site public
+        <div className="pt-8 border-t border-rose/10">
+          <button onClick={() => window.location.href = '/'} className="w-full py-4 text-[9px] uppercase tracking-widest text-white/20 hover:text-rose transition-colors flex items-center justify-center gap-3">
+             <span>←</span> Retour au site
           </button>
         </div>
       </nav>
 
       {/* ── MAIN WORKSPACE ── */}
-      <main className="pl-80 min-h-screen p-16">
+      <main className={`transition-all duration-500 min-h-screen p-6 sm:p-10 lg:p-16 pt-24 lg:pt-16 ${menuOpen ? 'blur-sm lg:blur-0' : ''} lg:pl-80`}>
         
-        <header className="flex justify-between items-end mb-20">
+        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mb-12 sm:mb-20">
           <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
-            <h2 className="text-[11px] uppercase tracking-[0.6em] text-rose font-bold mb-4">Système de Gestion</h2>
-            <h3 className="text-5xl font-display font-light">Espace <span className="italic text-rose">Maya Bar 2026</span></h3>
+            <h2 className="text-[9px] uppercase tracking-[0.6em] text-rose font-bold mb-2 sm:mb-4">Système de Gestion</h2>
+            <h3 className="text-3xl sm:text-5xl font-display font-light leading-tight">Espace <span className="italic text-rose">Maya Bar 2026</span></h3>
           </motion.div>
-          <div className="px-8 py-4 bg-white/5 rounded-2xl border border-white/10 flex items-center gap-4">
+          <div className="px-6 py-3 bg-white/5 rounded-xl border border-white/10 flex items-center gap-3">
             <div className="w-2 h-2 bg-rose rounded-full animate-ping" />
-            <span className="text-[10px] uppercase tracking-widest font-bold opacity-60">Status: Operational</span>
+            <span className="text-[9px] uppercase tracking-widest font-bold opacity-60">Status: Operational</span>
           </div>
         </header>
 
