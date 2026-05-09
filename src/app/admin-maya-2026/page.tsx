@@ -33,6 +33,7 @@ export default function AdminUltraPremium() {
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState('')
   const [loginLoading, setLoginLoading] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const [tab, setTab] = useState<'dashboard' | 'catalog' | 'essences' | 'quiz' | 'clients'>('dashboard')
   const [parfums, setParfums] = useState<Parfum[]>([])
