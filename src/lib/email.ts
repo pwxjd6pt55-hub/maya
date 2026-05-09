@@ -136,17 +136,30 @@ export async function envoyerEmailsCommande(cmd: CommandeEmailData): Promise<{
   clientSent: boolean;
   error?: string;
 }> {
-  // Configuration Nodemailer avec Gmail
+  console.log('--- EMAIL : Tentative d\'envoi via', process.env.GMAIL_USER, '---');
+
+  // Configuration Nodemailer plus robuste pour Gmail
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // true pour port 465
     auth: {
       user: process.env.GMAIL_USER,
       pass: process.env.GMAIL_APP_PASSWORD,
     },
-    connectionTimeout: 5000, // 5 secondes max pour se connecter
-    greetingTimeout: 5000,
-    socketTimeout: 5000,
+    connectionTimeout: 10000, 
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
   });
+
+  try {
+    console.log('--- EMAIL : Vérification de la connexion SMTP... ---');
+    await transporter.verify();
+    console.log('--- EMAIL : Connexion SMTP OK ! ---');
+  } catch (err: any) {
+    console.error('--- EMAIL : Échec de la connexion SMTP ---', err.message);
+    return { success: false, adminSent: false, clientSent: false, error: `SMTP Connection failed: ${err.message}` };
+  }
 
   const adminEmail = process.env.ADMIN_EMAIL || process.env.GMAIL_USER || "kougnimag@gmail.com";
   let adminSent = false;
