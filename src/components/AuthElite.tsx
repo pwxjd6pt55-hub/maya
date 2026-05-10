@@ -26,7 +26,7 @@ export default function AuthElite({ type = 'login' }: { type?: 'login' | 'regist
       })
       const data = await res.json()
       if (data.success) {
-        window.location.href = data.role === 'admin' ? '/admin-maya-2026' : '/mon-compte'
+        window.location.href = data.role === 'admin' ? '/admin-maya-2026' : '/'
       } else {
         setError(data.error || 'Une erreur est survenue')
       }

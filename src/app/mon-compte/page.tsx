@@ -299,6 +299,11 @@ export default function AccountElite() {
 
       {/* ── BOTTOM NAV (mobile) ── */}
       <div className="fixed bottom-0 left-0 right-0 bg-[#0D0800]/95 backdrop-blur-md border-t border-white/5 px-5 py-4 flex gap-3 z-50">
+        <Link href="/" className="flex-1">
+          <button className="w-full py-3 rounded-2xl border border-white/10 text-[10px] uppercase tracking-widest font-bold text-white/40 hover:text-rose hover:border-rose/30 transition-all">
+            🏠 Accueil
+          </button>
+        </Link>
         <Link href="/configurateur" className="flex-1">
           <button className="w-full py-3 rounded-2xl border border-white/10 text-[10px] uppercase tracking-widest font-bold text-white/40 hover:text-rose hover:border-rose/30 transition-all">
             ✦ Créer
