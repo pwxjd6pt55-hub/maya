@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import pool from '@/lib/db'
 import bcrypt from 'bcryptjs'
 import { encrypt } from '@/lib/auth'
+import { envoyerEmailBienvenue } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,6 +28,9 @@ export async function POST(request: NextRequest) {
     )
 
     const userId = result.rows[0].id
+
+    // Envoyer l'email de bienvenue
+    await envoyerEmailBienvenue(nom, email)
 
     // Créer la session
     const expires = new Date(Date.now() + 120 * 60 * 1000) // 2 heures

@@ -46,7 +46,7 @@ export default function AdminUltraPremium() {
   // Form states
   const [showModal, setShowModal] = useState<'parfum' | 'essence' | 'quiz' | null>(null)
   const [newParfum, setNewParfum] = useState<Partial<Parfum>>({ nom: '', marque_inspiree: '', famille: 'Floral', prix_50ml: 12500 })
-  const [newEssence, setNewEssence] = useState<Partial<Essence>>({ nom: '', famille: 'Floral', note: 'Cœur', couleur: '#BC7C7C' })
+  const [newEssence, setNewEssence] = useState<any>({ nom: '', famille: 'Floral', note: 'Cœur', couleur: '#BC7C7C', description: '' })
   const [newQuiz, setNewQuiz] = useState({ question: '', options: [{text: '', category: 'Floral'}], ordre: 1 })
   const [uploading, setUploading] = useState(false)
 
@@ -137,6 +137,27 @@ export default function AdminUltraPremium() {
     if (confirm('Supprimer cette question ?')) {
        await fetch(`/api/quiz?id=${id}`, { method: 'DELETE' })
        fetchData()
+    }
+  }
+
+  const handleNotify = async (commande: any) => {
+    try {
+      const res = await fetch('/api/commandes/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commandeId: commande.id })
+      })
+      const data = await res.json()
+      if (data.success) {
+        // Email envoyé, ouvrir WhatsApp en parallèle
+        window.open(data.whatsappLink, '_blank')
+        fetchData()
+        alert('✅ Notification envoyée ! WhatsApp ouvert.')
+      } else {
+        alert('Erreur: ' + data.error)
+      }
+    } catch (e) {
+      alert('Erreur réseau')
     }
   }
 
@@ -293,19 +314,31 @@ export default function AdminUltraPremium() {
               <div className="glass-card p-12">
                  <h4 className="text-sm uppercase tracking-[0.4em] font-bold text-rose mb-10">Dernières Commandes</h4>
                  <div className="space-y-8">
-                    {commandes.length > 0 ? commandes.slice(0, 8).map((c, i) => (
-                      <div key={i} className="flex items-center justify-between group p-4 hover:bg-white/5 rounded-2xl transition-all">
+                    {commandes.length > 0 ? commandes.slice(0, 10).map((c, i) => (
+                      <div key={i} className="flex items-center justify-between group p-4 hover:bg-white/5 rounded-2xl transition-all gap-4">
                         <div className="flex items-center gap-6">
-                          <div className="w-12 h-12 rounded-full bg-rose/5 border border-rose/10 flex items-center justify-center font-display italic text-rose">M</div>
+                          <div className="w-12 h-12 rounded-full bg-rose/5 border border-rose/10 flex items-center justify-center font-display italic text-rose flex-shrink-0">M</div>
                           <div>
-                            <div className="text-sm font-medium tracking-wide">{c.client_nom} · {c.client_telephone}</div>
-                            <div className="text-[10px] text-white/40 italic mt-0.5">{c.client_adresse || 'Pas d\'adresse'}</div>
-                            <div className="text-[10px] text-white/20 uppercase tracking-widest mt-1">Ref: {c.reference} · {c.retrait}</div>
+                            <div className="text-sm font-medium tracking-wide">{c.client_nom} · {c.client_telephone || c.client_tel}</div>
+                            <div className="text-[10px] text-white/40 italic mt-0.5">{c.client_adresse || c.client_email || '—'}</div>
+                            <div className="text-[10px] text-white/20 uppercase tracking-widest mt-1">Ref: {c.reference} · {c.retrait || c.mode_retrait}</div>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex flex-col items-end gap-2">
                           <div className="text-sm font-display text-rose font-bold">{c.prix_total?.toLocaleString()} F</div>
-                          <div className={`text-[8px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mt-2 inline-block ${c.statut === 'livree' ? 'bg-green-500/10 text-green-500' : 'bg-rose/10 text-rose'}`}>{c.statut}</div>
+                          <div className={`text-[8px] font-bold uppercase tracking-widest px-3 py-1 rounded-full inline-block ${
+                            c.statut === 'livree' || c.statut === 'livre' ? 'bg-green-500/10 text-green-500' :
+                            c.statut === 'pret' ? 'bg-yellow-500/10 text-yellow-400' :
+                            'bg-rose/10 text-rose'
+                          }`}>{c.statut || 'en cours'}</div>
+                          {c.statut !== 'livree' && c.statut !== 'livre' && (
+                            <button
+                              onClick={() => handleNotify(c)}
+                              className="text-[8px] font-bold uppercase tracking-widest px-3 py-1.5 bg-white/5 hover:bg-rose/20 hover:text-rose border border-white/10 hover:border-rose/30 rounded-full transition-all"
+                            >
+                              📲 Notifier
+                            </button>
+                          )}
                         </div>
                       </div>
                     )) : (
@@ -455,19 +488,66 @@ export default function AdminUltraPremium() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-                  {/* Reuse of existing logic for Parfum/Essence */}
-                  <div className="space-y-10">
-                    <input 
-                      value={showModal === 'parfum' ? newParfum.nom : newEssence.nom} 
-                      onChange={e => showModal === 'parfum' ? setNewParfum({...newParfum, nom: e.target.value}) : setNewEssence({...newEssence, nom: e.target.value})} 
-                      className="luxury-input w-full" 
-                      placeholder="Nom..." 
-                    />
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-widest text-rose font-bold">Nom</label>
+                      <input 
+                        value={showModal === 'parfum' ? newParfum.nom : newEssence.nom} 
+                        onChange={e => showModal === 'parfum' ? setNewParfum({...newParfum, nom: e.target.value}) : setNewEssence({...newEssence, nom: e.target.value})} 
+                        className="luxury-input w-full" 
+                        placeholder="Ex: Rose de Damas..." 
+                      />
+                    </div>
+                    {showModal === 'parfum' && (
+                      <>
+                        <div className="space-y-2">
+                          <label className="text-[10px] uppercase tracking-widest text-rose font-bold">Inspiré de</label>
+                          <input value={newParfum.marque_inspiree || ''} onChange={e => setNewParfum({...newParfum, marque_inspiree: e.target.value})} className="luxury-input w-full" placeholder="Ex: Chanel N°5..." />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] uppercase tracking-widest text-rose font-bold">Famille olfactive</label>
+                          <input value={newParfum.famille || ''} onChange={e => setNewParfum({...newParfum, famille: e.target.value})} className="luxury-input w-full" placeholder="Ex: Floral Oriental..." />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] uppercase tracking-widest text-rose font-bold">Prix 50ml (F)</label>
+                          <input type="number" value={newParfum.prix_50ml || ''} onChange={e => setNewParfum({...newParfum, prix_50ml: parseInt(e.target.value)})} className="luxury-input w-full" placeholder="14000" />
+                        </div>
+                      </>
+                    )}
+                    {showModal === 'essence' && (
+                      <>
+                        <div className="space-y-2">
+                          <label className="text-[10px] uppercase tracking-widest text-rose font-bold">Famille</label>
+                          <select value={newEssence.famille} onChange={e => setNewEssence({...newEssence, famille: e.target.value})} className="luxury-input w-full">
+                            {['Floral', 'Boisé', 'Oriental', 'Agrumes', 'Frais', 'Épicé', 'Gourmand', 'Musqué'].map(f => <option key={f} value={f}>{f}</option>)}
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] uppercase tracking-widest text-rose font-bold">Note</label>
+                          <select value={newEssence.note} onChange={e => setNewEssence({...newEssence, note: e.target.value})} className="luxury-input w-full">
+                            {['tête', 'cœur', 'fond'].map(n => <option key={n} value={n}>{n}</option>)}
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] uppercase tracking-widest text-rose font-bold">Description</label>
+                          <textarea value={newEssence.description} onChange={e => setNewEssence({...newEssence, description: e.target.value})} className="luxury-input w-full h-24 resize-none" placeholder="Décrivez le caractère de cette essence..." />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] uppercase tracking-widest text-rose font-bold">Couleur</label>
+                          <input type="color" value={newEssence.couleur} onChange={e => setNewEssence({...newEssence, couleur: e.target.value})} className="w-full h-12 rounded-xl cursor-pointer border-0 bg-transparent" />
+                        </div>
+                      </>
+                    )}
                     <button onClick={showModal === 'parfum' ? saveParfum : saveEssence} className="btn-gold w-full py-6">VALIDER L&apos;AJOUT</button>
                   </div>
-                  <div className="aspect-square bg-rose/5 border-2 border-dashed border-rose/20 rounded-[40px] flex items-center justify-center relative cursor-pointer group">
+                  <div className="aspect-square bg-rose/5 border-2 border-dashed border-rose/20 rounded-[40px] flex flex-col items-center justify-center relative cursor-pointer group gap-4">
                      <span className="text-4xl opacity-20 group-hover:scale-110 transition-transform">📷</span>
-                     <input type="file" onChange={e => e.target.files && handleUpload(e.target.files[0], showModal as any)} className="absolute inset-0 opacity-0 cursor-pointer" />
+                     <span className="text-[9px] uppercase tracking-widest opacity-20">Photo du produit</span>
+                     {uploading && <span className="text-[9px] text-rose animate-pulse">Envoi en cours...</span>}
+                     {(showModal === 'parfum' ? newParfum.image_url : newEssence.image_url) && (
+                       <img src={showModal === 'parfum' ? newParfum.image_url : newEssence.image_url} className="absolute inset-0 w-full h-full object-contain rounded-[40px] p-6" alt="preview" />
+                     )}
+                     <input type="file" accept="image/*" onChange={e => e.target.files && handleUpload(e.target.files[0], showModal as any)} className="absolute inset-0 opacity-0 cursor-pointer" />
                   </div>
                 </div>
               )}

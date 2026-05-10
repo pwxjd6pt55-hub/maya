@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 
@@ -21,26 +21,102 @@ export default function MayaHome() {
   const [cartCount, setCartCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
   const { scrollY } = useScroll()
   const yHero = useTransform(scrollY, [0, 500], [0, 150])
   const opacityHero = useTransform(scrollY, [0, 300], [1, 0])
 
+  const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 3000)
+  }, [])
+
   useEffect(() => {
+    // Charger les parfums
     fetch('/api/parfums')
       .then(r => r.json())
       .then(data => {
         if (data.success) setParfums(data.data)
         setLoading(false)
       })
-    
-    fetch('/api/cart').then(r => r.json()).then(d => {
-      if (d.success) setCartCount(d.items.length)
-    }).catch(() => {})
+
+    // Vérifier la session utilisateur
+    fetch('/api/auth')
+      .then(r => r.json())
+      .then(data => {
+        if (data.authenticated && data.user) setUser(data.user)
+      })
+      .catch(() => {})
+
+    // Compter les articles du panier
+    fetch('/api/cart')
+      .then(r => r.json())
+      .then(d => { if (d.success) setCartCount(d.items?.length || 0) })
+      .catch(() => {})
   }, [])
+
+  const handleLogout = async () => {
+    await fetch('/api/auth', { method: 'DELETE' })
+    setUser(null)
+    setCartCount(0)
+    showToast('Vous êtes déconnecté', 'info')
+  }
+
+  const addToCart = async (parfum: any) => {
+    if (!user) {
+      showToast('Connectez-vous pour ajouter au panier', 'info')
+      return
+    }
+    try {
+      const res = await fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          item_type: 'catalogue',
+          parfum_catalogue_id: parfum.id,
+          nom_personnalise: parfum.nom,
+          ml: 50,
+          prix: parfum.prix_50ml || 0,
+          quantite: 1,
+        })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setCartCount(c => c + 1)
+        showToast(`✨ ${parfum.nom} ajouté au panier !`)
+      } else if (res.status === 401) {
+        showToast('Connectez-vous pour ajouter au panier', 'info')
+      } else {
+        showToast('Erreur lors de l\'ajout', 'error')
+      }
+    } catch {
+      showToast('Erreur réseau', 'error')
+    }
+  }
 
   return (
     <div className="bg-[#0D0800] text-[#F9F5F2] font-body overflow-x-hidden">
       
+      {/* ── TOAST NOTIFICATION ── */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -60, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: -60, x: '-50%' }}
+            className={`fixed top-24 left-1/2 z-[200] px-6 py-4 rounded-full text-sm font-bold tracking-widest uppercase shadow-2xl ${
+              toast.type === 'success' ? 'bg-rose text-white' :
+              toast.type === 'error' ? 'bg-red-600 text-white' :
+              'bg-white/10 backdrop-blur text-white border border-white/20'
+            }`}
+          >
+            {toast.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── BARRE DE NAVIGATION MOBILE-FIRST ── */}
       <nav className="fixed top-0 w-full z-[100] px-4 sm:px-8 py-4 sm:py-6 flex justify-between items-center bg-[#0D0800]/80 backdrop-blur-md border-b border-white/5">
         <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="group cursor-pointer">
@@ -54,23 +130,30 @@ export default function MayaHome() {
           <Link href="#hero" className="hover:text-rose transition-colors">Accueil</Link>
           <Link href="#collection" className="hover:text-rose transition-colors">Collection</Link>
           <Link href="/configurateur" className="hover:text-rose transition-colors">Le Bar</Link>
-          <Link href="/mon-compte" className="relative group">
-            <span className="hover:text-rose transition-colors">Mon Compte</span>
-            {cartCount > 0 && (
-              <motion.span 
-               initial={{ scale: 0 }}
-               animate={{ scale: 1 }}
-               className="absolute -top-3 -right-3 w-4 h-4 bg-[#D4AF37] rounded-full text-[7px] flex items-center justify-center text-black font-bold"
-              >
-               {cartCount}
-              </motion.span>
-            )}
-          </Link>
+          {user ? (
+            <Link href="/mon-compte" className="relative group">
+              <span className="hover:text-rose transition-colors">Mon Compte</span>
+              {cartCount > 0 && (
+                <motion.span 
+                 initial={{ scale: 0 }}
+                 animate={{ scale: 1 }}
+                 className="absolute -top-3 -right-3 w-4 h-4 bg-[#D4AF37] rounded-full text-[7px] flex items-center justify-center text-black font-bold"
+                >
+                 {cartCount}
+                </motion.span>
+              )}
+            </Link>
+          ) : (
+            <>
+              <Link href="/connexion" className="hover:text-rose transition-colors">Connexion</Link>
+              <Link href="/inscription" className="hover:text-rose transition-colors">Inscription</Link>
+            </>
+          )}
         </div>
 
         {/* Mobile: panier + menu */}
         <div className="flex items-center gap-3 md:hidden">
-          {cartCount > 0 && (
+          {user && cartCount > 0 && (
             <Link href="/mon-compte" className="relative">
               <span className="text-[10px] uppercase tracking-widest font-bold opacity-60">🛍️</span>
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#D4AF37] rounded-full text-[7px] flex items-center justify-center text-black font-bold">{cartCount}</span>
@@ -84,7 +167,15 @@ export default function MayaHome() {
         </div>
 
         {/* Desktop CTA */}
-        <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="hidden md:block">
+        <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="hidden md:flex items-center gap-4">
+          {user ? (
+            <div className="flex items-center gap-4">
+              <span className="text-[11px] uppercase tracking-widest opacity-50">👤 {user.nom?.split(' ')[0]}</span>
+              <button onClick={handleLogout} className="text-[10px] uppercase tracking-widest opacity-40 hover:text-rose hover:opacity-100 transition-all">
+                Déconnexion
+              </button>
+            </div>
+          ) : null}
           <Link href="/configurateur">
             <motion.button 
               whileHover={{ scale: 1.05 }}
@@ -110,9 +201,6 @@ export default function MayaHome() {
               { href: '#hero', label: 'Accueil' },
               { href: '#collection', label: 'Collection' },
               { href: '/configurateur', label: 'Le Bar' },
-              { href: '/mon-compte', label: 'Mon Compte' },
-              { href: '/connexion', label: 'Connexion' },
-              { href: '/inscription', label: 'Inscription' },
             ].map(link => (
               <Link
                 key={link.href}
@@ -123,6 +211,21 @@ export default function MayaHome() {
                 {link.label}
               </Link>
             ))}
+            {user ? (
+              <>
+                <Link href="/mon-compte" onClick={() => setMenuOpen(false)} className="font-display text-4xl italic text-white/60 hover:text-rose transition-colors">
+                  Mon Compte {cartCount > 0 && <span className="text-lg text-[#D4AF37]">({cartCount})</span>}
+                </Link>
+                <button onClick={() => { handleLogout(); setMenuOpen(false) }} className="text-[11px] uppercase tracking-widest text-rose/60 hover:text-rose transition-colors">
+                  Déconnexion
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/connexion" onClick={() => setMenuOpen(false)} className="font-display text-4xl italic text-white/60 hover:text-rose transition-colors">Connexion</Link>
+                <Link href="/inscription" onClick={() => setMenuOpen(false)} className="font-display text-4xl italic text-white/60 hover:text-rose transition-colors">Inscription</Link>
+              </>
+            )}
             <Link href="/configurateur" onClick={() => setMenuOpen(false)}>
               <button className="btn-gold mt-6 px-10 py-4 text-[10px]">CRÉER MON PARFUM</button>
             </Link>
@@ -169,20 +272,27 @@ export default function MayaHome() {
                <button className="btn-gold w-full py-4 sm:py-6 text-[10px] sm:text-[11px]">DÉMARRER VOTRE CRÉATION</button>
              </Link>
              
-             <div className="flex gap-4 w-full max-w-xs sm:max-w-sm">
-               <Link href="/connexion" className="flex-1">
-                  <button className="bg-white/5 border border-white/10 text-white tracking-[0.2em] uppercase text-[9px] py-4 px-4 hover:bg-white/10 transition-all w-full rounded-full">Connexion</button>
+             {!user && (
+               <div className="flex gap-4 w-full max-w-xs sm:max-w-sm">
+                 <Link href="/connexion" className="flex-1">
+                    <button className="bg-white/5 border border-white/10 text-white tracking-[0.2em] uppercase text-[9px] py-4 px-4 hover:bg-white/10 transition-all w-full rounded-full">Connexion</button>
+                 </Link>
+                 <Link href="/inscription" className="flex-1">
+                    <button className="bg-rose text-white tracking-[0.2em] uppercase text-[9px] py-4 px-4 hover:bg-rose/80 transition-all w-full rounded-full">Inscription</button>
+                 </Link>
+               </div>
+             )}
+             {user && (
+               <Link href="/mon-compte" className="text-[10px] uppercase tracking-[0.4em] opacity-60 hover:opacity-100 hover:text-rose transition-all">
+                 👤 Bonjour, {user.nom?.split(' ')[0]} →
                </Link>
-               <Link href="/inscription" className="flex-1">
-                  <button className="bg-rose text-white tracking-[0.2em] uppercase text-[9px] py-4 px-4 hover:bg-rose/80 transition-all w-full rounded-full">Inscription</button>
-               </Link>
-             </div>
+             )}
 
              <a href="#collection" className="text-[9px] uppercase tracking-[0.4em] opacity-40 hover:opacity-100 transition-opacity mt-4 italic">Explorer la Collection</a>
            </motion.div>
         </div>
 
-        {/* Scroll Indicator - Hidden on small screens to avoid overlap */}
+        {/* Scroll Indicator */}
         <motion.div 
           animate={{ y: [0, 10, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
@@ -197,7 +307,20 @@ export default function MayaHome() {
       <section id="collection" className="py-20 sm:py-32 lg:py-40 px-4 sm:px-8 max-w-[1500px] mx-auto">
         <motion.div {...fadeInUp} className="text-center mb-16 sm:mb-24 lg:mb-32">
            <p className="text-rose text-[13px] uppercase tracking-[0.5em] font-bold mb-4 sm:mb-6">Nos Fragrances Iconiques</p>
-           <h3 className="font-display text-[clamp(2rem,6vw,5rem)] font-light">La Collection <span className="italic text-rose">Prestige</span></h3>
+           <h3 className="font-display text-[clamp(2rem,6vw,5rem)] font-light mb-10">La Collection <span className="italic text-rose">Prestige</span></h3>
+           
+           <div className="max-w-md mx-auto relative">
+             <input
+               type="text"
+               value={searchQuery}
+               onChange={(e) => setSearchQuery(e.target.value)}
+               placeholder="Rechercher un parfum, une famille, une inspiration..."
+               className="w-full bg-white/5 border border-white/10 rounded-full py-4 pl-6 pr-12 text-sm text-white placeholder-white/30 focus:outline-none focus:border-rose/50 transition-colors"
+             />
+             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute right-5 top-1/2 -translate-y-1/2 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+             </svg>
+           </div>
         </motion.div>
 
         <motion.div 
@@ -209,7 +332,15 @@ export default function MayaHome() {
           {loading ? (
             Array(6).fill(0).map((_, i) => <div key={i} className="h-[400px] sm:h-[500px] bg-white/5 rounded-[30px] sm:rounded-[40px] animate-pulse" />)
           ) : (
-            parfums.map((p, i) => (
+            parfums.filter((p) => {
+              if (!searchQuery) return true;
+              const term = searchQuery.toLowerCase();
+              return (
+                (p.nom && p.nom.toLowerCase().includes(term)) ||
+                (p.famille && p.famille.toLowerCase().includes(term)) ||
+                (p.marque_inspiree && p.marque_inspiree.toLowerCase().includes(term))
+              );
+            }).map((p) => (
               <motion.div 
                 key={p.id} 
                 variants={fadeInUp}
@@ -238,11 +369,14 @@ export default function MayaHome() {
                    
                    <div className="flex justify-between items-center pt-6 border-t border-white/5">
                       <div className="text-xl sm:text-2xl font-display text-[#D4AF37] font-bold">{p.prix_50ml?.toLocaleString()} F</div>
-                      <Link href="/configurateur">
-                        <button className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-rose/20 flex items-center justify-center hover:bg-rose hover:text-white transition-all text-lg sm:text-xl">
-                          +
-                        </button>
-                      </Link>
+                      <motion.button
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => addToCart(p)}
+                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-rose/20 flex items-center justify-center hover:bg-rose hover:text-white hover:border-rose transition-all text-lg sm:text-xl"
+                        title="Ajouter au panier"
+                      >
+                        +
+                      </motion.button>
                    </div>
                 </div>
               </motion.div>

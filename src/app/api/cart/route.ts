@@ -24,36 +24,42 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const session = await getSession()
-  console.log('--- POST CART : Session reçue ---', session ? 'OUI' : 'NON');
-
   if (!session || !session.userId) {
-    console.warn('--- POST CART : Non authentifié ---');
     return NextResponse.json({ authenticated: false }, { status: 401 })
   }
 
   try {
     const body = await request.json()
-    console.log('--- POST CART : Body reçu ---', body.item_type);
-    
     let { item_type, parfum_catalogue_id, nom_personnalise, ml, prix, quantite, gravure, couleur, essences_json, parfums_json } = body
     if (item_type === 'melange') item_type = 'melange_essences'
 
     // 1. Get or Create Cart
-    console.log("--- POST CART : Recherche du panier pour user ---", session.userId);
     let { rows: panier } = await pool.query('SELECT id FROM panier WHERE user_id = $1', [session.userId])
     let panierId: number
     
     if (panier.length === 0) {
-      console.log("--- POST CART : Création d'un nouveau panier ---");
       const res = await pool.query('INSERT INTO panier (user_id) VALUES ($1) RETURNING id', [session.userId])
       panierId = res.rows[0].id
     } else {
       panierId = panier[0].id
     }
-    console.log("--- POST CART : Panier ID ---", panierId);
 
-    // 2. Add Item
-    console.log("--- POST CART : Insertion de l'item ---");
+    // 2. Check for duplicate (même parfum, même ml) → incrémenter la quantité
+    if (parfum_catalogue_id && ml) {
+      const { rows: existing } = await pool.query(
+        'SELECT id, quantite FROM panier_items WHERE panier_id = $1 AND parfum_catalogue_id = $2 AND ml = $3',
+        [panierId, parfum_catalogue_id, ml]
+      )
+      if (existing.length > 0) {
+        await pool.query(
+          'UPDATE panier_items SET quantite = quantite + $1 WHERE id = $2',
+          [quantite || 1, existing[0].id]
+        )
+        return NextResponse.json({ success: true, updated: true })
+      }
+    }
+
+    // 3. Ajouter le nouvel article
     await pool.query(`
       INSERT INTO panier_items 
         (panier_id, item_type, parfum_catalogue_id, nom_personnalise, ml, prix, quantite, gravure, couleur, essences_json, parfums_json)
@@ -65,12 +71,33 @@ export async function POST(request: NextRequest) {
       parfums_json ? JSON.stringify(parfums_json) : null
     ])
 
-    console.log('--- POST CART : Succès ! ---');
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
-    console.error('--- POST CART ERROR ---', errorMessage);
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue'
+    console.error('Cart POST ERROR:', errorMessage)
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 })
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  const session = await getSession()
+  if (!session || !session.userId) return NextResponse.json({ authenticated: false }, { status: 401 })
+
+  try {
+    const { itemId, quantite } = await request.json()
+    if (!itemId) return NextResponse.json({ success: false }, { status: 400 })
+
+    const { rows: panier } = await pool.query('SELECT id FROM panier WHERE user_id = $1', [session.userId])
+    if (panier.length === 0) return NextResponse.json({ success: false })
+
+    if (quantite <= 0) {
+      await pool.query('DELETE FROM panier_items WHERE id = $1 AND panier_id = $2', [itemId, panier[0].id])
+    } else {
+      await pool.query('UPDATE panier_items SET quantite = $1 WHERE id = $2 AND panier_id = $3', [quantite, itemId, panier[0].id])
+    }
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    return NextResponse.json({ success: false, error: 'Erreur serveur' }, { status: 500 })
   }
 }
 
