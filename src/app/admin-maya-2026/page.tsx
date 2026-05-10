@@ -113,14 +113,20 @@ export default function AdminUltraPremium() {
       if (data.success) {
         if (type === 'parfum') setNewParfum({ ...newParfum, image_url: data.url })
         else setNewEssence({ ...newEssence, image_url: data.url })
+      } else {
+        alert("Erreur lors de l'upload de l'image: " + data.error)
       }
-    } catch (e: unknown) { console.error(e) }
+    } catch (e: unknown) { 
+      console.error(e)
+      alert("Erreur réseau lors de l'upload.")
+    }
     setUploading(false)
   }
 
   const saveParfum = async () => {
-    const res = await fetch('/api/parfums', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newParfum) })
-    if (res.ok) { setShowModal(null); fetchData(); }
+    const method = newParfum.id ? 'PATCH' : 'POST'
+    const res = await fetch('/api/parfums', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newParfum) })
+    if (res.ok) { setShowModal(null); fetchData(); setNewParfum({ nom: '', marque_inspiree: '', famille: 'Floral', prix_50ml: 12500 }) }
   }
 
   const saveEssence = async () => {
@@ -354,21 +360,21 @@ export default function AdminUltraPremium() {
             <motion.div key="catalog" variants={containerVariants} initial="hidden" animate="visible" className="space-y-12">
               <div className="flex justify-between items-center bg-[#120D0A]/30 p-10 rounded-[30px] border border-rose/10 backdrop-blur-md">
                 <p className="text-sm font-light text-white/50 tracking-wide max-w-md">Administrez votre collection de fragrances de prestige. Ajoutez de nouvelles créations ou modifiez les tarifs.</p>
-                <button onClick={() => setShowModal('parfum')} className="btn-gold px-10 py-5 text-[10px]">AJOUTER AU CATALOGUE</button>
+                <button onClick={() => { setNewParfum({ nom: '', marque_inspiree: '', famille: 'Floral', prix_50ml: 12500 }); setShowModal('parfum'); }} className="btn-gold px-10 py-5 text-[10px]">AJOUTER AU CATALOGUE</button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                 {parfums.map(p => (
                   <motion.div key={p.id} variants={itemVariants} className="glass-card group overflow-hidden hover:border-rose/40 transition-all duration-700">
                     <div className="h-72 bg-gradient-to-b from-white/[0.03] to-transparent flex items-center justify-center p-12 relative overflow-hidden">
-                      {p.image_url ? <img src={p.image_url} alt={p.nom} className="max-h-full max-w-full object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] group-hover:scale-110 transition-transform duration-700" /> : <span className="font-display text-7xl text-rose/10 italic">M</span>}
+                      {p.image_url ? <img src={p.image_url} alt={p.nom} className="w-full h-full object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] group-hover:scale-110 transition-transform duration-700" /> : <span className="font-display text-7xl text-rose/10 italic">M</span>}
                     </div>
                     <div className="p-10">
                       <p className="text-[9px] uppercase tracking-[0.4em] text-rose font-bold mb-2">{p.famille}</p>
                       <h5 className="text-3xl font-display font-medium tracking-tight mb-6">{p.nom}</h5>
                       <div className="flex justify-between items-center py-6 border-t border-white/5">
                         <div className="text-2xl font-display text-gold font-bold">{p.prix_50ml?.toLocaleString()} F</div>
-                        <button className="text-white/20 hover:text-rose transition-colors text-[9px] uppercase font-bold tracking-widest">Modifier</button>
+                        <button onClick={() => { setNewParfum(p); setShowModal('parfum'); }} className="text-white/20 hover:text-rose transition-colors text-[9px] uppercase font-bold tracking-widest">Modifier</button>
                       </div>
                     </div>
                   </motion.div>
@@ -538,7 +544,9 @@ export default function AdminUltraPremium() {
                         </div>
                       </>
                     )}
-                    <button onClick={showModal === 'parfum' ? saveParfum : saveEssence} className="btn-gold w-full py-6">VALIDER L&apos;AJOUT</button>
+                    <button onClick={showModal === 'parfum' ? saveParfum : saveEssence} className="btn-gold w-full py-6">
+                      {showModal === 'parfum' && newParfum.id ? 'ENREGISTRER LES MODIFICATIONS' : 'VALIDER L\'AJOUT'}
+                    </button>
                   </div>
                   <div className="aspect-square bg-rose/5 border-2 border-dashed border-rose/20 rounded-[40px] flex flex-col items-center justify-center relative cursor-pointer group gap-4">
                      <span className="text-4xl opacity-20 group-hover:scale-110 transition-transform">📷</span>
