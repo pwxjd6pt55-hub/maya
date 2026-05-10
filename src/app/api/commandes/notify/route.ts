@@ -30,6 +30,21 @@ export async function POST(request: NextRequest) {
     const clientTel = commande.client_telephone || commande.client_tel || '';
     const clientEmail = commande.client_email || commande.email || '';
 
+    // Sécurisation du JSON (évite les crashs si items_json est invalide)
+    let parfumNom = 'Votre création';
+    let parfumContenance = '';
+    if (commande.items_json) {
+      try {
+        const items = typeof commande.items_json === 'string' ? JSON.parse(commande.items_json) : commande.items_json;
+        if (Array.isArray(items) && items.length > 0) {
+          parfumNom = items[0]?.nom || 'Votre création';
+          parfumContenance = items[0]?.ml ? items[0].ml + 'ml' : '';
+        }
+      } catch (e) {
+        console.error('JSON Error:', e);
+      }
+    }
+
     // Envoyer l'email de notification si le client a un email
     if (clientEmail) {
       await envoyerEmailsCommande({
@@ -37,8 +52,8 @@ export async function POST(request: NextRequest) {
         clientNom: commande.client_nom || 'Client',
         clientTel: clientTel,
         clientEmail: clientEmail,
-        parfum: commande.items_json ? (JSON.parse(commande.items_json)[0]?.nom || 'Votre création') : 'Votre création',
-        contenance: commande.items_json ? (JSON.parse(commande.items_json)[0]?.ml + 'ml' || '') : '',
+        parfum: parfumNom,
+        contenance: parfumContenance,
         prix: commande.prix_total || 0,
         type: 'catalogue',
         notes: '✅ Votre commande est prête ! Venez la récupérer ou attendez la livraison.',
