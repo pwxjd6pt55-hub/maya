@@ -26,15 +26,19 @@ export async function POST(request: NextRequest) {
     // Mettre à jour le statut à "pret"
     await pool.query("UPDATE commandes SET statut = 'pret' WHERE id = $1", [commandeId])
 
+    // Sécurisation des données
+    const clientTel = commande.client_telephone || commande.client_tel || '';
+    const clientEmail = commande.client_email || commande.email || '';
+
     // Envoyer l'email de notification si le client a un email
-    if (commande.client_email) {
+    if (clientEmail) {
       await envoyerEmailsCommande({
-        id: commande.reference || commande.id,
-        clientNom: commande.client_nom,
-        clientTel: commande.client_tel,
-        clientEmail: commande.client_email,
-        parfum: commande.items_json ? JSON.parse(commande.items_json)[0]?.nom || 'Votre création' : 'Votre création',
-        contenance: commande.items_json ? JSON.parse(commande.items_json)[0]?.ml + 'ml' || '' : '',
+        id: commande.reference || commande.id?.toString(),
+        clientNom: commande.client_nom || 'Client',
+        clientTel: clientTel,
+        clientEmail: clientEmail,
+        parfum: commande.items_json ? (JSON.parse(commande.items_json)[0]?.nom || 'Votre création') : 'Votre création',
+        contenance: commande.items_json ? (JSON.parse(commande.items_json)[0]?.ml + 'ml' || '') : '',
         prix: commande.prix_total || 0,
         type: 'catalogue',
         notes: '✅ Votre commande est prête ! Venez la récupérer ou attendez la livraison.',
@@ -43,9 +47,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Lien WhatsApp de fallback
-    const telPropre = (commande.client_tel || '').replace(/[^0-9]/g, '')
+    const telPropre = clientTel.replace(/[^0-9]/g, '')
     const messageWA = encodeURIComponent(
-      `Bonjour ${commande.client_nom} ! 🌹\n\nVotre commande Maya Bar #${commande.reference || commande.id} est prête !\n\nVenez la récupérer à la boutique ou contactez-nous pour la livraison.\n\nMerci de votre confiance ✨\n— Maya Bar à Senteurs`
+      `Bonjour ${commande.client_nom || 'Client'} ! 🌹\n\nVotre commande Maya Bar #${commande.reference || commande.id} est prête !\n\nVenez la récupérer à la boutique ou contactez-nous pour la livraison.\n\nMerci de votre confiance ✨\n— Maya Bar à Senteurs`
     )
     const whatsappLink = `https://wa.me/${telPropre}?text=${messageWA}`
 
