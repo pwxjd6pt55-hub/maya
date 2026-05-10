@@ -439,8 +439,8 @@ export default function MayaHome() {
             <div>
                <h5 className="text-[10px] uppercase tracking-[0.4em] text-rose font-bold mb-6">Suivez-nous</h5>
                <div className="flex gap-6 text-xl">
-                  <a href="#" className="opacity-40 hover:text-rose transition-colors">TikTok</a>
-                  <a href="#" className="opacity-40 hover:text-rose transition-colors">Insta</a>
+                  <a href="https://www.tiktok.com/@barasenteursmaya?_r=1&_t=ZS-96FMuiAWTZ6" target="_blank" rel="noopener noreferrer" className="opacity-40 hover:text-rose transition-colors">TikTok</a>
+                  <a href="https://www.instagram.com/maya_scents?igsh=MTQ0ZjBxMW53bnZ2Mg==" target="_blank" rel="noopener noreferrer" className="opacity-40 hover:text-rose transition-colors">Insta</a>
                </div>
             </div>
          </div>

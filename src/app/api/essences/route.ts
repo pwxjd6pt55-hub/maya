@@ -29,7 +29,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, error: 'Non autorisé' }, { status: 401 })
   }
   try {
-    const { nom, famille, note, couleur, description, image_url } = await request.json()
+    const data = await request.json()
+    const { nom, famille, note, couleur, description, image_url } = data
     
     const result = await pool.query(
       'INSERT INTO essences (nom, famille, note, couleur, description, image_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
@@ -37,19 +38,30 @@ export async function POST(request: Request) {
     )
 
     return NextResponse.json({ success: true, id: result.rows[0].id })
-  } catch (error) {
+  } catch (error: any) {
     console.error('DB POST Error:', error)
-    // Essai sans description si la colonne n'existe pas encore
-    try {
-      const { nom, famille, note, couleur, image_url } = await request.json()
-      const result = await pool.query(
-        'INSERT INTO essences (nom, famille, note, couleur, image_url) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-        [nom, famille, note, couleur || '#BC7C7C', image_url || null]
-      )
-      return NextResponse.json({ success: true, id: result.rows[0].id })
-    } catch (e) {
-      return NextResponse.json({ success: false, error: "Erreur lors de l'ajout" }, { status: 500 })
-    }
+    return NextResponse.json({ success: false, error: "Erreur lors de l'ajout: " + (error?.message || String(error)) }, { status: 500 })
+  }
+}
+
+export async function PATCH(request: Request) {
+  const session = await getSession()
+  if (!session || (!session.isAdmin && session.role !== 'admin')) {
+    return NextResponse.json({ success: false, error: 'Non autorisé' }, { status: 401 })
+  }
+  try {
+    const data = await request.json()
+    const { id, nom, famille, note, couleur, description, image_url } = data
+    
+    await pool.query(
+      'UPDATE essences SET nom=$1, famille=$2, note=$3, couleur=$4, description=$5, image_url=$6 WHERE id=$7',
+      [nom, famille, note, couleur || '#BC7C7C', description || '', image_url || null, id]
+    )
+
+    return NextResponse.json({ success: true })
+  } catch (error: any) {
+    console.error('DB PATCH Error:', error)
+    return NextResponse.json({ success: false, error: "Erreur lors de la modification: " + (error?.message || String(error)) }, { status: 500 })
   }
 }
 

@@ -130,8 +130,15 @@ export default function AdminUltraPremium() {
   }
 
   const saveEssence = async () => {
-    const res = await fetch('/api/essences', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newEssence) })
-    if (res.ok) { setShowModal(null); fetchData(); }
+    const method = newEssence.id ? 'PATCH' : 'POST'
+    const res = await fetch('/api/essences', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newEssence) })
+    if (res.ok) { 
+      setShowModal(null); 
+      fetchData(); 
+    } else {
+      const data = await res.json()
+      alert('Erreur: ' + data.error)
+    }
   }
 
   const saveQuiz = async () => {
@@ -399,7 +406,7 @@ export default function AdminUltraPremium() {
                         <td className="px-10 py-8 flex items-center gap-6"><div className="w-10 h-10 rounded-xl border border-rose/20" style={{ background: e.couleur }} /><span className="text-base font-medium">{e.nom}</span></td>
                         <td className="px-10 py-8 text-[10px] uppercase text-white/40">{e.famille}</td>
                         <td className="px-10 py-8"><span className="px-5 py-2 bg-rose/5 border border-rose/10 text-[9px] uppercase text-rose font-bold rounded-full">{e.note}</span></td>
-                        <td className="px-10 py-8 text-right"><button className="text-white/10 hover:text-rose transition-colors text-[9px] font-bold uppercase">Modifier</button></td>
+                        <td className="px-10 py-8 text-right"><button onClick={() => { setNewEssence(e); setShowModal('essence'); }} className="text-white/20 hover:text-rose transition-colors text-[9px] font-bold uppercase tracking-widest">Modifier</button></td>
                       </tr>
                     ))}
                   </tbody>
@@ -545,7 +552,7 @@ export default function AdminUltraPremium() {
                       </>
                     )}
                     <button onClick={showModal === 'parfum' ? saveParfum : saveEssence} className="btn-gold w-full py-6">
-                      {showModal === 'parfum' && newParfum.id ? 'ENREGISTRER LES MODIFICATIONS' : 'VALIDER L\'AJOUT'}
+                      {(showModal === 'parfum' && newParfum.id) || (showModal === 'essence' && newEssence.id) ? 'ENREGISTRER LES MODIFICATIONS' : 'VALIDER L\'AJOUT'}
                     </button>
                   </div>
                   <div className="aspect-square bg-rose/5 border-2 border-dashed border-rose/20 rounded-[40px] flex flex-col items-center justify-center relative cursor-pointer group gap-4">
