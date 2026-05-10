@@ -345,38 +345,44 @@ export default function MayaHome() {
                 key={p.id} 
                 variants={fadeInUp}
                 whileHover={{ y: -10 }}
-                className="glass-card group p-6 sm:p-10 relative overflow-hidden transition-all duration-700"
+                className="glass-card group relative overflow-hidden transition-all duration-700 flex flex-col border border-white/5 hover:border-rose/20"
               >
                 {/* Glowing Background on hover */}
-                <div className="absolute inset-0 bg-gradient-to-br from-rose/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                <div className="absolute inset-0 bg-gradient-to-br from-rose/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
                 
-                <div className="relative z-10">
-                   <div className="h-48 sm:h-64 lg:h-72 flex items-center justify-center mb-6 sm:mb-10">
+                <div className="relative z-10 flex-1 flex flex-col">
+                   <div className="w-full h-64 sm:h-80 lg:h-96 relative overflow-hidden bg-black/40">
                       {p.image_url ? (
                         <motion.img 
-                          whileHover={{ scale: 1.1, rotate: 3 }}
+                          whileHover={{ scale: 1.05 }}
                           src={p.image_url} alt={p.nom} 
-                          className="max-h-full max-w-full object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.6)] transition-transform duration-700" 
+                          className="w-full h-full object-cover transition-transform duration-1000" 
                         />
                       ) : (
-                        <div className="text-7xl sm:text-9xl font-display text-rose/5 italic opacity-20">M</div>
+                        <div className="w-full h-full flex items-center justify-center">
+                          <div className="text-7xl sm:text-9xl font-display text-rose/5 italic opacity-20">M</div>
+                        </div>
                       )}
+                      {/* Subtil dégradé en bas de l'image pour fondre avec la carte */}
+                      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#100B08] to-transparent pointer-events-none" />
                    </div>
                    
-                   <div className="text-[12px] uppercase tracking-[0.4em] text-rose font-bold mb-2">{p.famille}</div>
-                   <h4 className="text-2xl sm:text-4xl font-display font-medium mb-2 tracking-tight group-hover:text-rose transition-colors duration-500">{p.nom}</h4>
-                   <p className="text-[13px] text-white/40 uppercase tracking-widest italic mb-6 sm:mb-10">Inspiré de {p.marque_inspiree}</p>
-                   
-                   <div className="flex justify-between items-center pt-6 border-t border-white/5">
-                      <div className="text-xl sm:text-2xl font-display text-[#D4AF37] font-bold">{p.prix_50ml?.toLocaleString()} F</div>
-                      <motion.button
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => addToCart(p)}
-                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-rose/20 flex items-center justify-center hover:bg-rose hover:text-white hover:border-rose transition-all text-lg sm:text-xl"
-                        title="Ajouter au panier"
-                      >
-                        +
-                      </motion.button>
+                   <div className="px-6 sm:px-10 pb-6 sm:px-10 flex-1 flex flex-col -mt-10 relative z-20">
+                     <div className="text-[11px] uppercase tracking-[0.5em] text-rose font-bold mb-3 drop-shadow-md">{p.famille}</div>
+                     <h4 className="text-3xl sm:text-4xl font-display font-medium mb-3 tracking-tight group-hover:text-rose transition-colors duration-500 drop-shadow-md">{p.nom}</h4>
+                     <p className="text-[12px] text-white/50 uppercase tracking-widest italic mb-8 sm:mb-10 flex-1">Inspiré de {p.marque_inspiree}</p>
+                     
+                     <div className="flex justify-between items-center pt-6 border-t border-white/10">
+                        <div className="text-xl sm:text-2xl font-display text-[#D4AF37] font-bold">{p.prix_50ml?.toLocaleString()} F</div>
+                        <motion.button
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => addToCart(p)}
+                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-rose/30 flex items-center justify-center hover:bg-rose hover:text-white hover:border-rose transition-all text-xl sm:text-2xl shadow-lg shadow-black/50 bg-[#100B08]/80 backdrop-blur-sm"
+                          title="Ajouter au panier"
+                        >
+                          +
+                        </motion.button>
+                     </div>
                    </div>
                 </div>
               </motion.div>
