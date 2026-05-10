@@ -28,7 +28,8 @@ export async function POST(request: NextRequest) {
         (error, result) => {
           if (error) {
             console.error('Cloudinary Error:', error);
-            resolve(NextResponse.json({ success: false, error: 'Erreur Cloudinary' }, { status: 500 }));
+            const errorMsg = error.message ? error.message : JSON.stringify(error);
+            resolve(NextResponse.json({ success: false, error: 'Erreur Cloudinary: ' + errorMsg }, { status: 500 }));
           } else {
             resolve(NextResponse.json({ success: true, url: result?.secure_url }));
           }
