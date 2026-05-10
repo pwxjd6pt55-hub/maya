@@ -54,8 +54,8 @@ export async function POST(request: NextRequest) {
     const whatsappLink = `https://wa.me/${telPropre}?text=${messageWA}`
 
     return NextResponse.json({ success: true, whatsappLink })
-  } catch (error) {
+  } catch (error: any) {
     console.error("Notify Error:", error)
-    return NextResponse.json({ success: false, error: 'Erreur lors de la notification' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Erreur lors de la notification: ' + (error?.message || String(error)) }, { status: 500 })
   }
 }
