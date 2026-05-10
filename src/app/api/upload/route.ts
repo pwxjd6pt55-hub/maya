@@ -1,11 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { v2 as cloudinary } from 'cloudinary';
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,26 +12,20 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    return new Promise<NextResponse>((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        {
-          folder: 'maya_bar',
-          resource_type: 'auto',
-        },
-        (error, result) => {
-          if (error) {
-            console.error('Cloudinary Error:', error);
-            const errorMsg = error.message ? error.message : JSON.stringify(error);
-            resolve(NextResponse.json({ success: false, error: 'Erreur Cloudinary: ' + errorMsg }, { status: 500 }));
-          } else {
-            resolve(NextResponse.json({ success: true, url: result?.secure_url }));
-          }
-        }
-      ).end(buffer);
-    });
+    // Limite de 5 Mo pour éviter de surcharger la base de données PostgreSQL
+    if (buffer.length > 5 * 1024 * 1024) {
+      return NextResponse.json({ success: false, error: 'L\'image est trop lourde (maximum 5 Mo)' }, { status: 400 });
+    }
 
+    // Convertir l'image en Base64 Data URI
+    const mimeType = file.type || 'image/jpeg';
+    const base64 = buffer.toString('base64');
+    const dataUri = `data:${mimeType};base64,${base64}`;
+
+    // On retourne directement l'URI. Elle sera sauvegardée dans la colonne "image_url" (qui est de type TEXT)
+    return NextResponse.json({ success: true, url: dataUri });
   } catch (error) {
     console.error('Upload Error:', error);
-    return NextResponse.json({ success: false, error: 'Erreur serveur' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Erreur serveur lors du traitement de l\'image' }, { status: 500 });
   }
 }
