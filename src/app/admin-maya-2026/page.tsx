@@ -334,7 +334,7 @@ export default function AdminUltraPremium() {
                           <div className="text-sm font-display text-rose font-bold">{c.prix_total?.toLocaleString()} F</div>
                           <div className={`text-[8px] font-bold uppercase tracking-widest px-3 py-1 rounded-full inline-block ${
                             c.statut === 'livree' || c.statut === 'livre' ? 'bg-green-500/10 text-green-500' :
-                            c.statut === 'pret' ? 'bg-yellow-500/10 text-yellow-400' :
+                            c.statut === 'prete' ? 'bg-yellow-500/10 text-yellow-400' :
                             'bg-rose/10 text-rose'
                           }`}>{c.statut || 'en cours'}</div>
                           {c.statut !== 'livree' && c.statut !== 'livre' && (

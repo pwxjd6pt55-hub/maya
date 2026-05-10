@@ -23,8 +23,8 @@ export async function POST(request: NextRequest) {
 
     const commande = rows[0]
 
-    // Mettre à jour le statut à "pret"
-    await pool.query("UPDATE commandes SET statut = 'pret' WHERE id = $1", [commandeId])
+    // Mettre à jour le statut à "prete"
+    await pool.query("UPDATE commandes SET statut = 'prete' WHERE id = $1", [commandeId])
 
     // Sécurisation des données
     const clientTel = commande.client_telephone || commande.client_tel || '';
