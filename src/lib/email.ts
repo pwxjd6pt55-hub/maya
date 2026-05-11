@@ -18,11 +18,22 @@ export interface CommandeEmailData {
 
 // ─── Transporter Nodemailer (Gmail SMTP) ──────────────────────────────────────
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true, // true pour le port 465, false pour les autres ports
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD,
   },
+});
+
+// Vérifier la connexion SMTP au démarrage (optionnel mais utile pour le debug)
+transporter.verify(function(error, success) {
+  if (error) {
+    console.error("❌ Erreur de configuration SMTP:", error);
+  } else {
+    console.log("✅ Serveur SMTP prêt à envoyer des messages");
+  }
 });
 
 const PRIMARY_COLOR = "#BC7C7C";
@@ -200,6 +211,7 @@ export async function envoyerEmailsCommande(cmd: CommandeEmailData): Promise<{
 
   try {
     // 1. Email à l'admin
+    console.log(`Envoi email admin à: ${adminEmail}`);
     await transporter.sendMail({
       from: `"Maya Bar" <${process.env.GMAIL_USER}>`,
       to: adminEmail,
@@ -207,9 +219,11 @@ export async function envoyerEmailsCommande(cmd: CommandeEmailData): Promise<{
       html: templateAdmin(cmd),
     });
     adminSent = true;
+    console.log("✅ Email Admin envoyé");
 
     // 2. Email au client
     if (cmd.clientEmail) {
+      console.log(`Envoi email client à: ${cmd.clientEmail}`);
       await transporter.sendMail({
         from: `"Maya Bar" <${process.env.GMAIL_USER}>`,
         to: cmd.clientEmail,
@@ -217,6 +231,7 @@ export async function envoyerEmailsCommande(cmd: CommandeEmailData): Promise<{
         html: templateClient(cmd),
       });
       clientSent = true;
+      console.log("✅ Email Client envoyé");
     }
 
     return { success: true, adminSent, clientSent };
