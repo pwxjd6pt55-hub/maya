@@ -278,14 +278,17 @@ export async function envoyerEmailBienvenue(nom: string, email: string) {
 </div></body></html>`;
 
   try {
-    await transporter.sendMail({
+    const info = await transporter.sendMail({
       from: `"Maya Bar" <${process.env.GMAIL_USER}>`,
       to: email,
       subject: `Bienvenue chez Maya Bar à Senteurs ✨`,
       html,
     });
-  } catch (error) {
+    console.log("✅ Bienvenue envoyé:", info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error: any) {
     console.error("Erreur envoi bienvenue:", error);
+    return { success: false, error: error.message };
   }
 }
 

@@ -11,18 +11,23 @@ export async function GET() {
     
     console.log(`Tentative d'envoi d'un email de bienvenue à ${testEmail}...`);
     
-    await envoyerEmailBienvenue("Test Utilisateur", testEmail);
+    const result = await envoyerEmailBienvenue("Test Utilisateur", testEmail);
     
-    console.log("✅ Fin de la tentative d'envoi (vérifiez les logs du serveur pour les détails)");
-    
-    return NextResponse.json({ 
-      success: true, 
-      message: "Tentative d'envoi effectuée. Vérifiez votre boîte mail (et les spams) ainsi que la console du serveur.",
-      config: {
-        user: process.env.GMAIL_USER ? "Configuré ✅" : "Manquant ❌",
-        pass: process.env.GMAIL_APP_PASSWORD ? "Configuré ✅" : "Manquant ❌"
-      }
-    });
+    if (result.success) {
+      console.log("✅ E-mail envoyé avec succès !");
+      return NextResponse.json({ 
+        success: true, 
+        message: "E-mail envoyé avec succès ! Vérifiez votre boîte mail (et les spams).",
+        messageId: result.messageId
+      });
+    } else {
+      console.error("❌ Échec de l'envoi:", result.error);
+      return NextResponse.json({ 
+        success: false, 
+        error: result.error,
+        tip: "Vérifiez votre mot de passe d'application Google."
+      }, { status: 500 });
+    }
   } catch (error: any) {
     console.error("❌ Erreur critique lors du test:", error);
     return NextResponse.json({ 
