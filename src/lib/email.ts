@@ -60,7 +60,7 @@ function templateNouvelleCommande(commande: any) {
         <p><strong>Total :</strong> ${commande.total} FCFA</p>
       </div>
       <p style="text-align: center; margin-top: 20px;">
-        <a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin" style="background: #d4af37; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Voir dans l'admin</a>
+        <a href="${process.env.NEXT_PUBLIC_SITE_URL || ''}/admin-maya-2026" style="background: #d4af37; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Voir dans l'admin</a>
       </p>
     </div>
   `;
