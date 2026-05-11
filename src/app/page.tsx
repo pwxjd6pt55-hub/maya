@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useDeferredValue } from 'react'
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 
@@ -24,6 +24,7 @@ export default function MayaHome() {
   const [user, setUser] = useState<any>(null)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const deferredSearchQuery = useDeferredValue(searchQuery)
   const { scrollY } = useScroll()
   const yHero = useTransform(scrollY, [0, 500], [0, 150])
   const opacityHero = useTransform(scrollY, [0, 300], [1, 0])
@@ -86,6 +87,7 @@ export default function MayaHome() {
       if (data.success) {
         setCartCount(c => c + 1)
         showToast(`✨ ${parfum.nom} ajouté au panier !`)
+        setSearchQuery('') // Auto-clear search when item is added
       } else if (res.status === 401) {
         showToast('Connectez-vous pour ajouter au panier', 'info')
       } else {
@@ -317,9 +319,21 @@ export default function MayaHome() {
                placeholder="Rechercher un parfum, une famille, une inspiration..."
                className="w-full bg-white/5 border border-white/10 rounded-full py-4 pl-6 pr-12 text-sm text-white placeholder-white/30 focus:outline-none focus:border-rose/50 transition-colors"
              />
-             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute right-5 top-1/2 -translate-y-1/2 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-             </svg>
+             {searchQuery ? (
+               <button 
+                 onClick={() => setSearchQuery('')}
+                 className="absolute right-5 top-1/2 -translate-y-1/2 text-white/50 hover:text-rose transition-colors flex items-center justify-center p-2"
+                 title="Effacer la recherche"
+               >
+                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                 </svg>
+               </button>
+             ) : (
+               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute right-5 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+               </svg>
+             )}
            </div>
         </motion.div>
 
@@ -333,8 +347,8 @@ export default function MayaHome() {
             Array(6).fill(0).map((_, i) => <div key={i} className="h-[400px] sm:h-[500px] bg-white/5 rounded-[30px] sm:rounded-[40px] animate-pulse" />)
           ) : (
             parfums.filter((p) => {
-              if (!searchQuery) return true;
-              const term = searchQuery.toLowerCase();
+              if (!deferredSearchQuery) return true;
+              const term = deferredSearchQuery.toLowerCase();
               return (
                 (p.nom && p.nom.toLowerCase().includes(term)) ||
                 (p.famille && p.famille.toLowerCase().includes(term)) ||
