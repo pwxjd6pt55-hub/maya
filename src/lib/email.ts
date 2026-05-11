@@ -1,4 +1,4 @@
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface CommandeEmailData {
@@ -16,8 +16,16 @@ export interface CommandeEmailData {
   dateCommande: string;
 }
 
+// ─── Transporter Nodemailer (Gmail SMTP) ──────────────────────────────────────
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
+
 const PRIMARY_COLOR = "#BC7C7C";
-const SECONDARY_COLOR = "#3D2B1F";
 
 // ─── Template email ADMIN ─────────────────────────────────────────────────────
 function templateAdmin(cmd: CommandeEmailData): string {
@@ -65,10 +73,6 @@ function templateAdmin(cmd: CommandeEmailData): string {
     ${cmd.gravure ? `<div class="row"><span class="lbl">Gravure</span><span class="val">"${cmd.gravure}"</span></div>` : ""}
     <div class="row"><span class="lbl">Référence</span><span class="val">#${cmd.id}</span></div>
     <div class="pbox"><div class="amt">${cmd.prix.toLocaleString()} F</div><div class="lbl2">Montant à percevoir</div></div>
-    <div class="actions">
-      <a href="https://wa.me/${cmd.clientTel.replace(/[^0-9]/g, '')}?text=Bonjour%20${encodeURIComponent(cmd.clientNom)}%2C%20votre%20commande%20Maya%20Bar%20est%20en%20cours%20de%20préparation%20✨" class="btn btn-wa">WhatsApp Client</a>
-      <a href="${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/admin-maya-2026" class="btn btn-adm">Gestion Admin</a>
-    </div>
   </div>
   <div class="footer"><p>Maya Bar à Senteurs · Lomé, Togo</p></div>
 </div></body></html>`;
@@ -129,110 +133,7 @@ function templateClient(cmd: CommandeEmailData): string {
 </div></body></html>`;
 }
 
-// ─── Fonction principale d'envoi ──────────────────────────────────────────────
-export async function envoyerEmailsCommande(cmd: CommandeEmailData): Promise<{
-  success: boolean;
-  adminSent: boolean;
-  clientSent: boolean;
-  error?: string;
-}> {
-  console.log('--- EMAIL : Tentative d\'envoi via RESEND ---');
-
-  if (!process.env.RESEND_API_KEY) {
-    console.error("ERREUR: RESEND_API_KEY manquante dans les variables d'environnement.");
-    return { success: false, adminSent: false, clientSent: false, error: "Clé API Resend manquante" };
-  }
-
-  const resend = new Resend(process.env.RESEND_API_KEY);
-  const adminEmail = process.env.ADMIN_EMAIL || "kougnimag@gmail.com";
-  let adminSent = false;
-  let clientSent = false;
-
-  try {
-    // 1. Email à l'admin
-    const dataAdmin = await resend.emails.send({
-      from: 'Maya Bar <onboarding@resend.dev>', // Note: Utiliser ton domaine si tu en as un
-      to: adminEmail,
-      subject: `✨ NOUVELLE COMMANDE #${cmd.id} — ${cmd.clientNom}`,
-      html: templateAdmin(cmd),
-    });
-    
-    if (dataAdmin.error) {
-      console.error("Resend Admin Error:", dataAdmin.error);
-    } else {
-      adminSent = true;
-    }
-
-    // 2. Email au client
-    if (cmd.clientEmail) {
-      const dataClient = await resend.emails.send({
-        from: 'Maya Bar <onboarding@resend.dev>',
-        to: cmd.clientEmail,
-        subject: `Votre Signature Maya Bar est réservée — #${cmd.id}`,
-        html: templateClient(cmd),
-      });
-      if (!dataClient.error) clientSent = true;
-    }
-
-    return { success: true, adminSent, clientSent };
-  } catch (error: any) {
-    console.error("Erreur RESEND:", error);
-    return {
-      success: false,
-      adminSent,
-      clientSent,
-      error: error.message,
-    };
-  }
-}
-
-// ─── Email de Bienvenue ───────────────────────────────────────────────────────
-export async function envoyerEmailBienvenue(nom: string, email: string) {
-  if (!process.env.RESEND_API_KEY) return;
-  const resend = new Resend(process.env.RESEND_API_KEY);
-  
-  const html = `<!DOCTYPE html>
-<html lang="fr">
-<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<style>
-  body{font-family: 'Jost', Georgia, serif; background:#f9f5f4; color:#3D2B1F; margin:0; padding:20px}
-  .wrap{max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #eee}
-  .header{background:#0D0800;padding:40px 30px;text-align:center}
-  .logo{color:#BC7C7C;font-size:28px;letter-spacing:6px;text-transform:uppercase;font-weight:bold}
-  .tagline{color:#8B5E5E;font-size:10px;letter-spacing:3px;margin-top:8px;text-transform:uppercase}
-  .body{padding:40px 30px; text-align:center;}
-  h2{font-size:24px;color:#0D0800;margin-bottom:20px;font-family:Georgia,serif}
-  p{font-size:14px;line-height:1.8;color:#8B5E5E;margin-bottom:30px}
-  .btn{display:inline-block;background:#BC7C7C;color:white;padding:14px 30px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase}
-  .footer{background:#0D0800;padding:30px;text-align:center}
-  .footer p{font-size:9px;color:#8B5E5E;letter-spacing:2px;text-transform:uppercase;margin:0}
-</style></head>
-<body><div class="wrap">
-  <div class="header">
-    <div class="logo">MAYA BAR</div><div class="tagline">Bar à Senteurs · Lomé</div>
-  </div>
-  <div class="body">
-    <h2>Bienvenue dans l'Élite Maya, <span style="color:#BC7C7C;font-style:italic">${nom}</span></h2>
-    <p>Votre compte a été créé avec succès. Vous faites désormais partie du cercle fermé des amateurs de haute parfumerie artisanale du Togo.</p>
-    <p>Nous vous invitons à explorer notre collection ou à créer votre propre parfum sur-mesure au bar à senteurs.</p>
-    <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/configurateur" class="btn">Créer mon parfum</a>
-  </div>
-  <div class="footer"><p>© Maya Bar · Lomé, Togo</p></div>
-</div></body></html>`;
-
-  try {
-    await resend.emails.send({
-      from: 'Maya Bar <onboarding@resend.dev>',
-      to: email,
-      subject: `Bienvenue chez Maya Bar à Senteurs ✨`,
-      html,
-    });
-  } catch (error) {
-    console.error("Erreur envoi bienvenue:", error);
-  }
-}
-
-// ─── Template et Fonction : Commande Prête ─────────────────────────────────────
+// ─── Template Commande Prête ──────────────────────────────────────────────────
 function templateCommandePrete(cmd: CommandeEmailData): string {
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -285,24 +186,102 @@ function templateCommandePrete(cmd: CommandeEmailData): string {
 </div></body></html>`;
 }
 
-export async function envoyerEmailCommandePrete(cmd: CommandeEmailData): Promise<{ success: boolean; error?: string; }> {
-  console.log('--- EMAIL : Envoi Notification Commande Prête ---');
-  if (!process.env.RESEND_API_KEY) return { success: false, error: "Clé API Resend manquante" };
-  const resend = new Resend(process.env.RESEND_API_KEY);
+// ─── Fonction principale d'envoi ──────────────────────────────────────────────
+export async function envoyerEmailsCommande(cmd: CommandeEmailData): Promise<{
+  success: boolean;
+  adminSent: boolean;
+  clientSent: boolean;
+  error?: string;
+}> {
+  console.log('--- EMAIL : Tentative d\'envoi via GMAIL SMTP ---');
+  const adminEmail = process.env.ADMIN_EMAIL || "kougnimag@gmail.com";
+  let adminSent = false;
+  let clientSent = false;
+
   try {
-    const dataClient = await resend.emails.send({
-      from: 'Maya Bar <onboarding@resend.dev>',
+    // 1. Email à l'admin
+    await transporter.sendMail({
+      from: `"Maya Bar" <${process.env.GMAIL_USER}>`,
+      to: adminEmail,
+      subject: `✨ NOUVELLE COMMANDE #${cmd.id} — ${cmd.clientNom}`,
+      html: templateAdmin(cmd),
+    });
+    adminSent = true;
+
+    // 2. Email au client
+    if (cmd.clientEmail) {
+      await transporter.sendMail({
+        from: `"Maya Bar" <${process.env.GMAIL_USER}>`,
+        to: cmd.clientEmail,
+        subject: `Votre Signature Maya Bar est réservée — #${cmd.id}`,
+        html: templateClient(cmd),
+      });
+      clientSent = true;
+    }
+
+    return { success: true, adminSent, clientSent };
+  } catch (error: any) {
+    console.error("Erreur SMTP:", error);
+    return { success: false, adminSent, clientSent, error: error.message };
+  }
+}
+
+// ─── Email de Bienvenue ───────────────────────────────────────────────────────
+export async function envoyerEmailBienvenue(nom: string, email: string) {
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+  body{font-family: 'Jost', Georgia, serif; background:#f9f5f4; color:#3D2B1F; margin:0; padding:20px}
+  .wrap{max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #eee}
+  .header{background:#0D0800;padding:40px 30px;text-align:center}
+  .logo{color:#BC7C7C;font-size:28px;letter-spacing:6px;text-transform:uppercase;font-weight:bold}
+  .tagline{color:#8B5E5E;font-size:10px;letter-spacing:3px;margin-top:8px;text-transform:uppercase}
+  .body{padding:40px 30px; text-align:center;}
+  h2{font-size:24px;color:#0D0800;margin-bottom:20px;font-family:Georgia,serif}
+  p{font-size:14px;line-height:1.8;color:#8B5E5E;margin-bottom:30px}
+  .btn{display:inline-block;background:#BC7C7C;color:white;padding:14px 30px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase}
+  .footer{background:#0D0800;padding:30px;text-align:center}
+  .footer p{font-size:9px;color:#8B5E5E;letter-spacing:2px;text-transform:uppercase;margin:0}
+</style></head>
+<body><div class="wrap">
+  <div class="header">
+    <div class="logo">MAYA BAR</div><div class="tagline">Bar à Senteurs · Lomé</div>
+  </div>
+  <div class="body">
+    <h2>Bienvenue dans l'Élite Maya, <span style="color:#BC7C7C;font-style:italic">${nom}</span></h2>
+    <p>Votre compte a été créé avec succès. Vous faites désormais partie du cercle fermé des amateurs de haute parfumerie artisanale du Togo.</p>
+    <p>Nous vous invitons à explorer notre collection ou à créer votre propre parfum sur-mesure au bar à senteurs.</p>
+    <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/configurateur" class="btn">Créer mon parfum</a>
+  </div>
+  <div class="footer"><p>© Maya Bar · Lomé, Togo</p></div>
+</div></body></html>`;
+
+  try {
+    await transporter.sendMail({
+      from: `"Maya Bar" <${process.env.GMAIL_USER}>`,
+      to: email,
+      subject: `Bienvenue chez Maya Bar à Senteurs ✨`,
+      html,
+    });
+  } catch (error) {
+    console.error("Erreur envoi bienvenue:", error);
+  }
+}
+
+// ─── Fonction : Commande Prête ────────────────────────────────────────────────
+export async function envoyerEmailCommandePrete(cmd: CommandeEmailData): Promise<{ success: boolean; error?: string; }> {
+  console.log('--- EMAIL : Envoi Notification Commande Prête via SMTP ---');
+  try {
+    await transporter.sendMail({
+      from: `"Maya Bar" <${process.env.GMAIL_USER}>`,
       to: cmd.clientEmail!,
       subject: `Votre création Maya Bar est prête ! ✨ — #${cmd.id}`,
       html: templateCommandePrete(cmd),
     });
-    if (dataClient.error) {
-      console.error("Resend Error:", dataClient.error);
-      return { success: false, error: dataClient.error.message };
-    }
     return { success: true };
   } catch (error: any) {
-    console.error("Erreur RESEND prete:", error);
+    console.error("Erreur SMTP prete:", error);
     return { success: false, error: error.message };
   }
 }
