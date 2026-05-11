@@ -24,7 +24,7 @@ async function sendBrevoEmail(subject: string, htmlContent: string, toEmail: str
           name: "Maya Bar à Senteurs", 
           email: process.env.SENDER_EMAIL || "kougnimag@gmail.com" 
         },
-        to: [{ email: toEmail, name: toName }],
+        to: toName ? [{ email: toEmail, name: toName }] : [{ email: toEmail }],
         subject: subject,
         htmlContent: htmlContent,
       }),
@@ -107,7 +107,8 @@ export async function envoyerEmailsCommande(commande: any) {
   const resAdmin = await sendBrevoEmail(
     `Nouvelle commande #${commande.reference}`,
     templateNouvelleCommande(commande),
-    process.env.ADMIN_EMAIL || "kougnimag@gmail.com"
+    process.env.ADMIN_EMAIL || "kougnimag@gmail.com",
+    "Admin Maya Bar"
   );
 
   // 2. Email pour le client
