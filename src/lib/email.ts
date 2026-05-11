@@ -19,17 +19,17 @@ export interface CommandeEmailData {
 // ─── Transporter Nodemailer (Gmail SMTP) ──────────────────────────────────────
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
+  port: 465,
+  secure: true, // true pour le port 465 (SSL)
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD,
   },
   tls: {
-    rejectUnauthorized: false // Aide à passer sur certains serveurs cloud
+    rejectUnauthorized: false
   },
-  connectionTimeout: 10000, // 10 secondes max pour se connecter
-  greetingTimeout: 10000,
+  connectionTimeout: 15000, // On augmente un peu le délai
+  greetingTimeout: 15000,
 });
 
 // Vérifier la connexion SMTP au démarrage (optionnel mais utile pour le debug)
