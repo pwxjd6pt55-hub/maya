@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import pool from '@/lib/db'
 import { getSession } from '@/lib/auth'
-import { envoyerEmailsCommande } from '@/lib/email'
+import { envoyerEmailCommandePrete } from '@/lib/email'
 
 // POST /api/commandes/notify — Notifie un client que sa commande est prête
 export async function POST(request: NextRequest) {
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     // Envoyer l'email de notification si le client a un email
     if (clientEmail) {
-      await envoyerEmailsCommande({
+      await envoyerEmailCommandePrete({
         id: commande.reference || commande.id?.toString(),
         clientNom: commande.client_nom || 'Client',
         clientTel: clientTel,

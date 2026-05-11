@@ -231,3 +231,78 @@ export async function envoyerEmailBienvenue(nom: string, email: string) {
     console.error("Erreur envoi bienvenue:", error);
   }
 }
+
+// ─── Template et Fonction : Commande Prête ─────────────────────────────────────
+function templateCommandePrete(cmd: CommandeEmailData): string {
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family: 'Jost', Georgia, serif; background:#f9f5f4; color:#3D2B1F}
+  .wrap{max-width:600px;margin:0 auto;padding:20px}
+  .header{background:#0D0800;padding:50px 30px;text-align:center;border-radius:12px 12px 0 0}
+  .logo{color:#BC7C7C;font-size:32px;letter-spacing:10px;text-transform:uppercase;font-weight:bold}
+  .tagline{color:#8B5E5E;font-size:11px;letter-spacing:4px;margin-top:10px;text-transform:uppercase}
+  .body{background:#fff;padding:50px 40px;border-left:1px solid #eee;border-right:1px solid #eee}
+  .recap{background:#fdfaf9;border:1px solid #f0e8e8;border-radius:4px;padding:30px;margin:30px 0}
+  .rtitle{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#BC7C7C;margin-bottom:20px;font-weight:bold}
+  .rrow{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px dashed #f0e8e8;font-size:13px}
+  .rrow:last-child{border-bottom:none}
+  .rlbl{color:#8B5E5E;text-transform:uppercase;font-size:10px;letter-spacing:1px}
+  .rval{font-weight:600;color:#0D0800}
+  .wa{background:#BC7C7C;padding:30px;border-radius:4px;text-align:center;margin:40px 0}
+  .wa p{color:white;font-size:12px;letter-spacing:1px;margin-bottom:15px;text-transform:uppercase;font-weight:bold}
+  .wa a{display:inline-block;background:white;color:#BC7C7C;padding:14px 30px;border-radius:2px;text-decoration:none;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase}
+  .footer{background:#0D0800;padding:30px;text-align:center;border-radius:0 0 12px 12px}
+  .footer p{font-size:9px;color:#8B5E5E;letter-spacing:2px;text-transform:uppercase;line-height:2}
+</style></head>
+<body><div class="wrap">
+  <div class="header">
+    <div class="logo">MAYA BAR</div>
+    <div class="tagline">Bar à Senteurs · Lomé</div>
+  </div>
+  <div class="body">
+    <p style="font-size:24px;color:#0D0800;margin-bottom:20px;font-family:Georgia,serif">Bonjour <span style="color:#BC7C7C;font-style:italic">${cmd.clientNom}</span>,</p>
+    <p style="font-size:14px;line-height:1.8;color:#8B5E5E;margin-bottom:32px">Excellente nouvelle ! Votre création parfumée est <strong style="color:#BC7C7C;text-transform:uppercase;">prête</strong>.</p>
+    <p style="font-size:14px;line-height:1.8;color:#8B5E5E;margin-bottom:32px">Vous pouvez passer la récupérer à notre boutique ou nous contacter pour organiser une livraison.</p>
+    <div class="recap">
+      <p class="rtitle">Détails de la commande</p>
+      <div class="rrow"><span class="rlbl">Référence</span><span class="rval">#${cmd.id}</span></div>
+      <div class="rrow"><span class="rlbl">Fragrance</span><span class="rval">${cmd.parfum}</span></div>
+      <div class="rrow"><span class="rlbl">Format</span><span class="rval">${cmd.contenance}</span></div>
+    </div>
+    <div class="wa">
+      <p>Organiser la récupération</p>
+      <a href="https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "22870993597"}?text=Bonjour%2C%20je%20viens%20récupérer%20ma%20commande%20%23${cmd.id}">Nous contacter sur WhatsApp</a>
+    </div>
+    <div style="text-align:center;padding:40px 0 0">
+      <p style="font-size:12px;color:#BC7C7C;letter-spacing:2px;text-transform:uppercase;font-weight:bold">L&apos;art du parfum sur-mesure</p>
+      <p style="font-size:14px;color:#8B5E5E;font-style:italic;margin-top:10px">L&apos;équipe Maya Bar à Senteurs</p>
+    </div>
+  </div>
+  <div class="footer"><p>© Maya Bar · Lomé, Togo · Haute Parfumerie Artisanale</p></div>
+</div></body></html>`;
+}
+
+export async function envoyerEmailCommandePrete(cmd: CommandeEmailData): Promise<{ success: boolean; error?: string; }> {
+  console.log('--- EMAIL : Envoi Notification Commande Prête ---');
+  if (!process.env.RESEND_API_KEY) return { success: false, error: "Clé API Resend manquante" };
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  try {
+    const dataClient = await resend.emails.send({
+      from: 'Maya Bar <onboarding@resend.dev>',
+      to: cmd.clientEmail!,
+      subject: \`Votre création Maya Bar est prête ! ✨ — #\${cmd.id}\`,
+      html: templateCommandePrete(cmd),
+    });
+    if (dataClient.error) {
+      console.error("Resend Error:", dataClient.error);
+      return { success: false, error: dataClient.error.message };
+    }
+    return { success: true };
+  } catch (error: any) {
+    console.error("Erreur RESEND prete:", error);
+    return { success: false, error: error.message };
+  }
+}
