@@ -1,48 +1,31 @@
-import { NextRequest, NextResponse } from "next/server";
-import { envoyerEmailsCommande } from "@/lib/email";
+import { NextResponse } from 'next/server';
+import { envoyerEmailBienvenue } from '@/lib/email';
 
-// GET /api/test-email  →  envoie un email de test à l'admin
-export const dynamic = 'force-dynamic';
-export async function GET(request: NextRequest) {
-  const testData = {
-    id: "TEST-001",
-    clientNom: "Maya Bar Test",
-    clientTel: "0600000000",
-    clientEmail: process.env.GMAIL_USER, // s'envoie à soi-même pour tester
-    parfum: "Rose d'Orient — Test",
-    contenance: "50ml",
-    gravure: "Test gravure",
-    emballage: "Écrin doré",
-    prix: 380,
-    type: "catalogue" as const,
-    notes: "Ceci est un email de test pour vérifier la configuration Gmail.",
-    dateCommande: new Date().toLocaleString("fr-FR", {
-      timeZone: "Africa/Lome",
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-  };
-
-  const result = await envoyerEmailsCommande(testData);
-
-  if (result.success) {
-    return NextResponse.json({
-      success: true,
-      message: "📧 Email de test envoyé avec succès !",
-      details: result,
+export async function GET() {
+  console.log("--- TEST EMAIL : Démarrage du test ---");
+  
+  try {
+    const testEmail = process.env.GMAIL_USER || "kougnimag@gmail.com";
+    
+    console.log(`Tentative d'envoi d'un email de bienvenue à ${testEmail}...`);
+    
+    await envoyerEmailBienvenue("Test Utilisateur", testEmail);
+    
+    console.log("✅ Fin de la tentative d'envoi (vérifiez les logs du serveur pour les détails)");
+    
+    return NextResponse.json({ 
+      success: true, 
+      message: "Tentative d'envoi effectuée. Vérifiez votre boîte mail (et les spams) ainsi que la console du serveur.",
+      config: {
+        user: process.env.GMAIL_USER ? "Configuré ✅" : "Manquant ❌",
+        pass: process.env.GMAIL_APP_PASSWORD ? "Configuré ✅" : "Manquant ❌"
+      }
     });
-  } else {
-    return NextResponse.json(
-      {
-        success: false,
-        message: "❌ Erreur lors de l'envoi",
-        error: result.error,
-        tip: "Vérifiez GMAIL_USER et GMAIL_APP_PASSWORD dans .env.local",
-      },
-      { status: 500 }
-    );
+  } catch (error: any) {
+    console.error("❌ Erreur critique lors du test:", error);
+    return NextResponse.json({ 
+      success: false, 
+      error: error.message 
+    }, { status: 500 });
   }
 }
