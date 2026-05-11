@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { envoyerEmailBienvenue } from '@/lib/email';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   console.log("--- TEST EMAIL : Démarrage du test ---");
   
