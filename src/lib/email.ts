@@ -293,7 +293,7 @@ export async function envoyerEmailCommandePrete(cmd: CommandeEmailData): Promise
     const dataClient = await resend.emails.send({
       from: 'Maya Bar <onboarding@resend.dev>',
       to: cmd.clientEmail!,
-      subject: \`Votre création Maya Bar est prête ! ✨ — #\${cmd.id}\`,
+      subject: `Votre création Maya Bar est prête ! ✨ — #${cmd.id}`,
       html: templateCommandePrete(cmd),
     });
     if (dataClient.error) {
