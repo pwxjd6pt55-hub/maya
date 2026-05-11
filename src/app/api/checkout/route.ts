@@ -51,13 +51,14 @@ export async function POST(request: NextRequest) {
       console.log('--- CHECKOUT : Envoi email (arrière-plan) pour ---', reference);
       // On ne met pas 'await' ici pour ne pas bloquer le client si l'email est lent
       envoyerEmailsCommande({
-        id: reference,
-        clientNom: client_nom,
-        clientTel: client_telephone,
-        clientEmail: client_email,
+        reference: reference,
+        nom: client_nom,
+        telephone: client_telephone,
+        email: client_email,
+        mode_commande: modeCommande,
+        total: item.prix,
         parfum: item.nom_personnalise || item.parfum_catalogue_nom || 'Mélange',
         contenance: `${item.ml}ml`,
-        prix: item.prix,
         type: item.item_type,
         dateCommande: new Date().toLocaleDateString()
       }).catch(e => console.error('--- CHECKOUT : Erreur email arrière-plan ---', e));
