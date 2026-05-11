@@ -19,8 +19,8 @@ export interface CommandeEmailData {
 // ─── Transporter Nodemailer (Gmail SMTP) ──────────────────────────────────────
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 465,
-  secure: true, // true pour le port 465, false pour les autres ports
+  port: 587,
+  secure: false, // false pour le port 587 (TLS)
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD,
