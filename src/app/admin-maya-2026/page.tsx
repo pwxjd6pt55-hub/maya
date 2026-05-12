@@ -314,12 +314,12 @@ export default function AdminUltraPremium() {
           {/* ── DASHBOARD ── */}
           {tab === 'dashboard' && (
             <motion.div key="dashboard" variants={containerVariants} initial="hidden" animate="visible" className="space-y-16">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
                 {stats.map((s, i) => (
-                  <motion.div key={i} variants={itemVariants} className="glass-card p-10 group hover:border-rose/30 transition-all">
-                    <div className={`text-3xl mb-6 ${s.color} bg-white/5 w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500`}>{s.icon}</div>
-                    <div className="text-3xl font-display font-medium mb-1 tracking-tight">{s.value}</div>
-                    <div className="text-[10px] uppercase tracking-[0.3em] text-white/30 font-bold">{s.label}</div>
+                  <motion.div key={i} variants={itemVariants} className="glass-card p-6 sm:p-10 group hover:border-rose/30 transition-all">
+                    <div className={`text-2xl sm:text-3xl mb-4 sm:mb-6 ${s.color} bg-white/5 w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500`}>{s.icon}</div>
+                    <div className="text-xl sm:text-3xl font-display font-medium mb-1 tracking-tight">{s.value}</div>
+                    <div className="text-[8px] sm:text-[10px] uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/30 font-bold">{s.label}</div>
                   </motion.div>
                 ))}
               </div>
@@ -329,29 +329,31 @@ export default function AdminUltraPremium() {
                  <div className="space-y-8">
                     {commandes.length > 0 ? commandes.slice(0, 10).map((c, i) => (
                       <div key={i} className="flex items-center justify-between group p-4 hover:bg-white/5 rounded-2xl transition-all gap-4">
-                        <div className="flex items-center gap-6">
-                          <div className="w-12 h-12 rounded-full bg-rose/5 border border-rose/10 flex items-center justify-center font-display italic text-rose flex-shrink-0">M</div>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-rose/5 border border-rose/10 flex items-center justify-center font-display italic text-rose flex-shrink-0">M</div>
                           <div>
-                            <div className="text-sm font-medium tracking-wide">{c.client_nom} · {c.client_telephone || c.client_tel}</div>
-                            <div className="text-[10px] text-white/40 italic mt-0.5">{c.client_adresse || c.client_email || '—'}</div>
-                            <div className="text-[10px] text-white/20 uppercase tracking-widest mt-1">Ref: {c.reference} · {c.retrait || c.mode_retrait}</div>
+                            <div className="text-xs sm:text-sm font-medium tracking-wide">{c.client_nom} · {c.client_telephone || c.client_tel}</div>
+                            <div className="text-[9px] sm:text-[10px] text-white/40 italic mt-0.5">{c.client_adresse || c.client_email || '—'}</div>
+                            <div className="text-[9px] sm:text-[10px] text-white/20 uppercase tracking-widest mt-1">Ref: {c.reference} · {c.retrait || c.mode_retrait}</div>
                           </div>
                         </div>
-                        <div className="text-right flex flex-col items-end gap-2">
-                          <div className="text-sm font-display text-rose font-bold">{c.prix_total?.toLocaleString()} F</div>
-                          <div className={`text-[8px] font-bold uppercase tracking-widest px-3 py-1 rounded-full inline-block ${
-                            c.statut === 'livree' || c.statut === 'livre' ? 'bg-green-500/10 text-green-500' :
-                            c.statut === 'prete' ? 'bg-yellow-500/10 text-yellow-400' :
-                            'bg-rose/10 text-rose'
-                          }`}>{c.statut || 'en cours'}</div>
-                          {c.statut !== 'livree' && c.statut !== 'livre' && (
-                            <button
-                              onClick={() => handleNotify(c)}
-                              className="text-[8px] font-bold uppercase tracking-widest px-3 py-1.5 bg-white/5 hover:bg-rose/20 hover:text-rose border border-white/10 hover:border-rose/30 rounded-full transition-all"
-                            >
-                              📲 Notifier
-                            </button>
-                          )}
+                        <div className="text-right flex flex-row sm:flex-col items-center sm:items-end gap-2">
+                          <div className="text-xs sm:text-sm font-display text-rose font-bold whitespace-nowrap">{c.prix_total?.toLocaleString()} F</div>
+                          <div className="flex flex-col items-end gap-2">
+                            <div className={`text-[7px] sm:text-[8px] font-bold uppercase tracking-widest px-2 sm:px-3 py-1 rounded-full inline-block ${
+                              c.statut === 'livree' || c.statut === 'livre' ? 'bg-green-500/10 text-green-500' :
+                              c.statut === 'prete' ? 'bg-yellow-500/10 text-yellow-400' :
+                              'bg-rose/10 text-rose'
+                            }`}>{c.statut || 'en cours'}</div>
+                            {c.statut !== 'livree' && c.statut !== 'livre' && (
+                              <button
+                                onClick={() => handleNotify(c)}
+                                className="text-[7px] sm:text-[8px] font-bold uppercase tracking-widest px-2 sm:px-3 py-1.5 bg-white/5 hover:bg-rose/20 hover:text-rose border border-white/10 hover:border-rose/30 rounded-full transition-all"
+                              >
+                                📲 Notifier
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     )) : (
@@ -430,11 +432,11 @@ export default function AdminUltraPremium() {
                          <div className="text-4xl font-display text-rose opacity-20 italic">0{i+1}</div>
                          <div>
                             <h5 className="text-xl font-display mb-2">{q.question}</h5>
-                            <div className="flex gap-2">
+                             <div className="flex flex-wrap gap-2 mt-2">
                                {(typeof q.options === 'string' ? JSON.parse(q.options) : q.options).map((opt: any, idx: number) => (
-                                 <span key={idx} className="px-3 py-1 bg-white/5 rounded-full text-[8px] uppercase tracking-widest text-white/40">{opt.label || opt.text || String(opt)}</span>
+                                 <span key={idx} className="px-3 py-1.5 bg-white/10 border border-white/5 rounded-full text-[9px] sm:text-[10px] uppercase tracking-widest text-white/60 font-medium">{opt.label || opt.text || String(opt)}</span>
                                ))}
-                            </div>
+                             </div>
                          </div>
                       </div>
                       <button onClick={() => deleteQuiz(q.id)} className="w-12 h-12 rounded-full border border-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-rose/20 transition-all text-xs">🗑️</button>
