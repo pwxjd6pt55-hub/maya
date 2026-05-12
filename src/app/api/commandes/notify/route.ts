@@ -48,16 +48,11 @@ export async function POST(request: NextRequest) {
     // Envoyer l'email de notification si le client a un email
     if (clientEmail) {
       await envoyerEmailCommandePrete({
-        id: commande.reference || commande.id?.toString(),
-        clientNom: commande.client_nom || 'Client',
-        clientTel: clientTel,
-        clientEmail: clientEmail,
-        parfum: parfumNom,
-        contenance: parfumContenance,
-        prix: commande.prix_total || 0,
-        type: 'catalogue',
-        notes: '✅ Votre commande est prête ! Venez la récupérer ou attendez la livraison.',
-        dateCommande: new Date().toLocaleDateString('fr-FR'),
+        reference: commande.reference || commande.id?.toString(),
+        nom: commande.client_nom || 'Client',
+        email: clientEmail,
+        mode_commande: commande.mode_commande || 'retrait',
+        total: commande.prix_total || 0
       })
     }
 
