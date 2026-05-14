@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback, useDeferredValue } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 
@@ -24,8 +24,18 @@ export default function MayaHome() {
   const [user, setUser] = useState<any>(null)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const deferredSearchQuery = useDeferredValue(searchQuery)
   const { scrollY, scrollYProgress } = useScroll()
+
+  const filteredParfums = useMemo(() => {
+    if (!searchQuery) return parfums;
+    const term = searchQuery.toLowerCase();
+    return parfums.filter((p) => 
+      (p.nom && p.nom.toLowerCase().includes(term)) ||
+      (p.famille && p.famille.toLowerCase().includes(term)) ||
+      (p.marque_inspiree && p.marque_inspiree.toLowerCase().includes(term))
+    );
+  }, [parfums, searchQuery]);
+
   const yHero = useTransform(scrollY, [0, 500], [0, 200])
   const opacityHero = useTransform(scrollY, [0, 400], [1, 0])
   const scaleHero = useTransform(scrollY, [0, 500], [1, 1.1])
@@ -403,15 +413,7 @@ export default function MayaHome() {
           {loading ? (
             Array(6).fill(0).map((_, i) => <div key={i} className="h-[400px] sm:h-[500px] bg-white/5 rounded-[30px] sm:rounded-[40px] animate-pulse" />)
           ) : (
-            parfums.filter((p) => {
-              if (!deferredSearchQuery) return true;
-              const term = deferredSearchQuery.toLowerCase();
-              return (
-                (p.nom && p.nom.toLowerCase().includes(term)) ||
-                (p.famille && p.famille.toLowerCase().includes(term)) ||
-                (p.marque_inspiree && p.marque_inspiree.toLowerCase().includes(term))
-              );
-            }).map((p) => (
+            filteredParfums.map((p) => (
               <motion.div 
                 key={p.id} 
                 variants={fadeInUp}

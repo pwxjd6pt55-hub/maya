@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 
@@ -42,6 +42,7 @@ export default function AdminUltraPremium() {
   const [clients, setClients] = useState<any[]>([])
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([])
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Form states
   const [showModal, setShowModal] = useState<'parfum' | 'essence' | 'quiz' | null>(null)
@@ -102,6 +103,26 @@ export default function AdminUltraPremium() {
     } catch (e: unknown) { console.error(e) }
     setLoading(false)
   }
+
+  const filteredParfums = useMemo(() => {
+    if (!searchQuery) return parfums;
+    const term = searchQuery.toLowerCase();
+    return parfums.filter(p => 
+      p.nom.toLowerCase().includes(term) || 
+      p.marque_inspiree.toLowerCase().includes(term) || 
+      p.famille.toLowerCase().includes(term)
+    );
+  }, [parfums, searchQuery]);
+
+  const filteredEssences = useMemo(() => {
+    if (!searchQuery) return essences;
+    const term = searchQuery.toLowerCase();
+    return essences.filter(e => 
+      e.nom.toLowerCase().includes(term) || 
+      e.famille.toLowerCase().includes(term) || 
+      e.note.toLowerCase().includes(term)
+    );
+  }, [essences, searchQuery]);
 
   const handleUpload = async (file: File, type: 'parfum' | 'essence') => {
     setUploading(true)
@@ -318,7 +339,7 @@ export default function AdminUltraPremium() {
           ].map((item) => (
             <button
               key={item.id}
-              onClick={() => { setTab(item.id as any); setMenuOpen(false); }}
+              onClick={() => { setTab(item.id as any); setMenuOpen(false); setSearchQuery(''); }}
               className={`w-full group flex items-center gap-5 px-6 py-4 rounded-2xl transition-all duration-700 ${tab === item.id ? 'bg-rose text-white shadow-[0_15px_40px_rgba(188,124,124,0.3)]' : 'hover:bg-white/[0.02] text-white/20 hover:text-white/50'}`}
             >
               <span className={`text-xl transition-transform duration-700 ${tab === item.id ? 'scale-110' : 'group-hover:translate-x-1'}`}>{item.icon}</span>
@@ -406,13 +427,22 @@ export default function AdminUltraPremium() {
           {/* ── CATALOG ── */}
           {tab === 'catalog' && (
             <motion.div key="catalog" variants={containerVariants} initial="hidden" animate="visible" className="space-y-12">
-              <div className="flex justify-between items-center bg-[#120D0A]/30 p-10 rounded-[30px] border border-rose/10 backdrop-blur-md">
-                <p className="text-sm font-light text-white/50 tracking-wide max-w-md">Administrez votre collection de fragrances de prestige. Ajoutez de nouvelles créations ou modifiez les tarifs.</p>
-                <button onClick={() => { setNewParfum({ nom: '', marque_inspiree: '', famille: 'Floral', prix_50ml: 12500 }); setShowModal('parfum'); }} className="btn-gold px-10 py-5 text-[10px]">AJOUTER AU CATALOGUE</button>
+              <div className="flex flex-col sm:flex-row justify-between items-center bg-[#120D0A]/30 p-10 rounded-[30px] border border-rose/10 backdrop-blur-md gap-6">
+                <div className="flex-1 space-y-4">
+                  <p className="text-sm font-light text-white/50 tracking-wide">Administrez votre collection de fragrances de prestige.</p>
+                  <input 
+                    type="text" 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Filtrer le catalogue..." 
+                    className="luxury-input !py-3 !px-6 !text-xs max-w-xs"
+                  />
+                </div>
+                <button onClick={() => { setNewParfum({ nom: '', marque_inspiree: '', famille: 'Floral', prix_50ml: 12500 }); setShowModal('parfum'); }} className="btn-gold px-10 py-5 text-[10px] whitespace-nowrap">AJOUTER AU CATALOGUE</button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                {parfums.map(p => (
+                {filteredParfums.map(p => (
                   <motion.div key={p.id} variants={itemVariants} className="glass-card group overflow-hidden hover:border-rose/40 transition-all duration-700">
                     <div className="h-72 bg-gradient-to-b from-white/[0.03] to-transparent flex items-center justify-center p-12 relative overflow-hidden">
                       {p.image_url ? <img src={p.image_url} alt={p.nom} className="w-full h-full object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] group-hover:scale-110 transition-transform duration-700" /> : <span className="font-display text-7xl text-rose/10 italic">M</span>}
@@ -434,15 +464,24 @@ export default function AdminUltraPremium() {
           {/* ── ESSENCES ── */}
           {tab === 'essences' && (
             <motion.div key="essences" variants={containerVariants} initial="hidden" animate="visible" className="space-y-12">
-              <div className="flex justify-between items-center bg-[#120D0A]/30 p-10 rounded-[30px] border border-rose/10">
-                <p className="text-sm font-light text-white/50 tracking-wide max-w-md">Gérez les essences pures disponibles pour le bar à senteurs. La précision est la clé de l&apos;excellence.</p>
-                <button onClick={() => setShowModal('essence')} className="btn-gold px-10 py-5 text-[10px]">NOUVELLE ESSENCE</button>
+              <div className="flex flex-col sm:flex-row justify-between items-center bg-[#120D0A]/30 p-10 rounded-[30px] border border-rose/10 gap-6">
+                <div className="flex-1 space-y-4">
+                  <p className="text-sm font-light text-white/50 tracking-wide">Gérez les essences pures disponibles pour le bar à senteurs.</p>
+                  <input 
+                    type="text" 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Chercher une essence..." 
+                    className="luxury-input !py-3 !px-6 !text-xs max-w-xs"
+                  />
+                </div>
+                <button onClick={() => setShowModal('essence')} className="btn-gold px-10 py-5 text-[10px] whitespace-nowrap">NOUVELLE ESSENCE</button>
               </div>
               <div className="glass-card overflow-hidden">
                 <table className="w-full text-left">
                   <thead><tr className="bg-white/[0.03] border-b border-rose/10"><th className="px-10 py-8 text-[10px] uppercase tracking-[0.4em] text-rose font-bold">Essence</th><th className="px-10 py-8 text-[10px] uppercase tracking-[0.4em] text-rose font-bold">Profil</th><th className="px-10 py-8 text-[10px] uppercase tracking-[0.4em] text-rose font-bold">Note</th><th className="px-10 py-8 text-[10px] uppercase tracking-[0.4em] text-rose font-bold text-right">Edition</th></tr></thead>
                   <tbody className="divide-y divide-white/5">
-                    {essences.map(e => (
+                    {filteredEssences.map(e => (
                       <tr key={e.id} className="hover:bg-white/[0.02] transition-colors">
                         <td className="px-10 py-8 flex items-center gap-6"><div className="w-10 h-10 rounded-xl border border-rose/20" style={{ background: e.couleur }} /><span className="text-base font-medium">{e.nom}</span></td>
                         <td className="px-10 py-8 text-[10px] uppercase text-white/40">{e.famille}</td>
