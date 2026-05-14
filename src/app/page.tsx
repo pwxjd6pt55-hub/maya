@@ -25,9 +25,28 @@ export default function MayaHome() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const deferredSearchQuery = useDeferredValue(searchQuery)
-  const { scrollY } = useScroll()
-  const yHero = useTransform(scrollY, [0, 500], [0, 150])
-  const opacityHero = useTransform(scrollY, [0, 300], [1, 0])
+  const { scrollY, scrollYProgress } = useScroll()
+  const yHero = useTransform(scrollY, [0, 500], [0, 200])
+  const opacityHero = useTransform(scrollY, [0, 400], [1, 0])
+  const scaleHero = useTransform(scrollY, [0, 500], [1, 1.1])
+  
+  // Header animation state
+  const [headerVisible, setHeaderVisible] = useState(true)
+  const [lastScrollY, setLastScrollY] = useState(0)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setHeaderVisible(false)
+      } else {
+        setHeaderVisible(true)
+      }
+      setLastScrollY(currentScrollY)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [lastScrollY])
 
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ message, type })
@@ -119,27 +138,43 @@ export default function MayaHome() {
         )}
       </AnimatePresence>
 
-      {/* ── BARRE DE NAVIGATION MOBILE-FIRST ── */}
-      <nav className="fixed top-0 w-full z-[100] px-4 sm:px-8 py-4 sm:py-6 flex justify-between items-center bg-[#0D0800]/80 backdrop-blur-md border-b border-white/5">
+      {/* ── BARRE DE NAVIGATION SMART ── */}
+      <motion.nav 
+        initial={{ y: 0 }}
+        animate={{ y: headerVisible ? 0 : -100 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="fixed top-0 w-full z-[100] px-4 sm:px-10 py-5 sm:py-7 flex justify-between items-center bg-[#0D0800]/60 backdrop-blur-xl border-b border-white/[0.03]"
+      >
         <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="group cursor-pointer">
           <Link href="/">
-            <h1 className="font-display text-2xl sm:text-3xl tracking-tighter group-hover:text-rose transition-colors duration-500">MAYA <span className="italic font-light opacity-40 group-hover:opacity-100 transition-all">BAR</span></h1>
+            <h1 className="font-display text-2xl sm:text-3xl tracking-tighter group-hover:text-rose transition-all duration-700">
+              MAYA <span className="italic font-light opacity-30 group-hover:opacity-100 transition-all">BAR</span>
+            </h1>
           </Link>
         </motion.div>
 
         {/* Desktop nav links */}
-        <div className="hidden md:flex gap-8 lg:gap-12 text-[12px] uppercase tracking-[0.4em] font-bold opacity-70">
-          <Link href="#hero" className="hover:text-rose transition-colors">Accueil</Link>
-          <Link href="#collection" className="hover:text-rose transition-colors">Collection</Link>
-          <Link href="/configurateur" className="hover:text-rose transition-colors">Le Bar</Link>
+        <div className="hidden lg:flex gap-12 text-[10px] uppercase tracking-[0.5em] font-bold">
+          {[
+            { href: '#hero', label: 'Accueil' },
+            { href: '#collection', label: 'Collection' },
+            { href: '/configurateur', label: 'Le Bar' },
+          ].map((link) => (
+            <Link key={link.label} href={link.href} className="relative group overflow-hidden opacity-60 hover:opacity-100 transition-all">
+              <span className="block transition-transform duration-500 group-hover:-translate-y-full">{link.label}</span>
+              <span className="absolute top-full left-0 block transition-transform duration-500 group-hover:-translate-y-full text-rose">{link.label}</span>
+            </Link>
+          ))}
+          
           {user ? (
-            <Link href="/mon-compte" className="relative group">
-              <span className="hover:text-rose transition-colors">Mon Compte</span>
+            <Link href="/mon-compte" className="relative group opacity-60 hover:opacity-100 transition-all">
+              <span className="block transition-transform duration-500 group-hover:-translate-y-full">Mon Compte</span>
+              <span className="absolute top-full left-0 block transition-transform duration-500 group-hover:-translate-y-full text-rose">Mon Compte</span>
               {cartCount > 0 && (
                 <motion.span 
                  initial={{ scale: 0 }}
                  animate={{ scale: 1 }}
-                 className="absolute -top-3 -right-3 w-4 h-4 bg-[#D4AF37] rounded-full text-[7px] flex items-center justify-center text-black font-bold"
+                 className="absolute -top-3 -right-4 w-4 h-4 bg-rose rounded-full text-[7px] flex items-center justify-center text-white font-bold"
                 >
                  {cartCount}
                 </motion.span>
@@ -147,48 +182,40 @@ export default function MayaHome() {
             </Link>
           ) : (
             <>
-              <Link href="/connexion" className="hover:text-rose transition-colors">Connexion</Link>
-              <Link href="/inscription" className="hover:text-rose transition-colors">Inscription</Link>
+              <Link href="/connexion" className="opacity-60 hover:opacity-100 transition-all">Connexion</Link>
+              <Link href="/inscription" className="opacity-60 hover:opacity-100 transition-all">Inscription</Link>
             </>
           )}
         </div>
 
-        {/* Mobile: panier + menu */}
-        <div className="flex items-center gap-3 md:hidden">
-          {user && cartCount > 0 && (
-            <Link href="/mon-compte" className="relative">
-              <span className="text-[10px] uppercase tracking-widest font-bold opacity-60">🛍️</span>
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#D4AF37] rounded-full text-[7px] flex items-center justify-center text-black font-bold">{cartCount}</span>
-            </Link>
-          )}
-          <button onClick={() => setMenuOpen(!menuOpen)} className="w-10 h-10 flex flex-col justify-center items-center gap-1.5">
-            <span className={`block w-6 h-[1px] bg-white transition-all ${menuOpen ? 'rotate-45 translate-y-1' : ''}`} />
-            <span className={`block w-6 h-[1px] bg-white transition-all ${menuOpen ? 'opacity-0' : ''}`} />
-            <span className={`block w-6 h-[1px] bg-white transition-all ${menuOpen ? '-rotate-45 -translate-y-2.5' : ''}`} />
-          </button>
-        </div>
-
         {/* Desktop CTA */}
-        <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="hidden md:flex items-center gap-4">
-          {user ? (
-            <div className="flex items-center gap-4">
-              <span className="text-[11px] uppercase tracking-widest opacity-50">👤 {user.nom?.split(' ')[0]}</span>
-              <button onClick={handleLogout} className="text-[10px] uppercase tracking-widest opacity-40 hover:text-rose hover:opacity-100 transition-all">
-                Déconnexion
+        <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="flex items-center gap-6">
+          {user && (
+            <div className="hidden md:flex items-center gap-4">
+              <span className="text-[10px] uppercase tracking-widest opacity-40">👤 {user.nom?.split(' ')[0]}</span>
+              <button onClick={handleLogout} className="text-[9px] uppercase tracking-widest opacity-30 hover:text-rose hover:opacity-100 transition-all">
+                Quitter
               </button>
             </div>
-          ) : null}
-          <Link href="/configurateur">
+          )}
+          <Link href="/configurateur" className="hidden sm:block">
             <motion.button 
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="btn-gold px-6 py-3 text-[10px]"
+              className="btn-gold !py-3 !px-8 !text-[9px]"
             >
               CRÉER MON PARFUM
             </motion.button>
           </Link>
+          
+          {/* Mobile Menu Trigger */}
+          <button onClick={() => setMenuOpen(!menuOpen)} className="lg:hidden w-10 h-10 flex flex-col justify-center items-end gap-1.5 group">
+            <span className={`block h-[1px] bg-white transition-all duration-500 ${menuOpen ? 'w-8 rotate-45 translate-y-1' : 'w-8 group-hover:w-6'}`} />
+            <span className={`block h-[1px] bg-white transition-all duration-500 ${menuOpen ? 'opacity-0' : 'w-6 group-hover:w-8'}`} />
+            <span className={`block h-[1px] bg-white transition-all duration-500 ${menuOpen ? 'w-8 -rotate-45 -translate-y-2' : 'w-4 group-hover:w-8'}`} />
+          </button>
         </motion.div>
-      </nav>
+      </motion.nav>
 
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
@@ -237,60 +264,90 @@ export default function MayaHome() {
 
       {/* ── SECTION HERO IMMERSIVE ── */}
       <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-        <motion.div style={{ y: yHero, opacity: opacityHero }} className="absolute inset-0 z-0">
-           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0D0800]/50 to-[#0D0800]" />
-           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/asfalt-dark.png')] opacity-10" />
+        <motion.div style={{ y: yHero, opacity: opacityHero, scale: scaleHero }} className="absolute inset-0 z-0">
+           <div className="absolute inset-0 bg-gradient-to-b from-[#0D0800]/20 via-[#0D0800]/60 to-[#0D0800]" />
+           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/asfalt-dark.png')] opacity-5" />
+           
+           {/* Animated Glows */}
            <motion.div 
-            animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
-            transition={{ duration: 10, repeat: Infinity }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[600px] lg:w-[800px] h-[300px] sm:h-[600px] lg:h-[800px] bg-rose/10 blur-[100px] sm:blur-[150px] rounded-full"
+            animate={{ 
+              scale: [1, 1.3, 1], 
+              opacity: [0.15, 0.25, 0.15],
+              x: [0, 50, 0],
+              y: [0, -30, 0]
+            }}
+            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-rose/20 blur-[120px] rounded-full"
+           />
+           <motion.div 
+            animate={{ 
+              scale: [1.2, 1, 1.2], 
+              opacity: [0.1, 0.2, 0.1],
+              x: [0, -40, 0],
+              y: [0, 60, 0]
+            }}
+            transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-[#D4AF37]/10 blur-[150px] rounded-full"
            />
         </motion.div>
 
-        <div className="relative z-10 text-center px-6 sm:px-8">
+        <div className="relative z-10 text-center px-6 sm:px-8 max-w-5xl">
            <motion.p 
-            initial={{ opacity: 0, letterSpacing: '0.2em' }}
-            animate={{ opacity: 1, letterSpacing: '0.8em' }}
-            transition={{ duration: 2 }}
-            className="text-rose text-[13px] sm:text-[14px] uppercase font-bold mb-6 sm:mb-8"
-           >
-             Lomé — Togo
-           </motion.p>
-           <motion.h2 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
-            className="font-display text-[clamp(2.8rem,11vw,9rem)] leading-[0.9] font-light mb-8 sm:mb-10"
-           >
-             L&apos;Art du <span className="italic text-rose">Sur-Mesure</span> Olfactif
-           </motion.h2>
-           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1, duration: 1 }}
-            className="flex flex-col gap-6 justify-center items-center mt-10"
+            transition={{ duration: 1, delay: 0.5 }}
+            className="text-rose text-[11px] sm:text-[13px] uppercase font-bold mb-8 tracking-[0.8em]"
            >
-             <Link href="/configurateur" className="w-full max-w-xs sm:max-w-sm">
-               <button className="btn-gold w-full py-4 sm:py-6 text-[10px] sm:text-[11px]">DÉMARRER VOTRE CRÉATION</button>
+             Lomé — Togo — Excellence Olfactive
+           </motion.p>
+           
+           <h2 className="font-display text-[clamp(2.5rem,10vw,8.5rem)] leading-[0.95] font-light mb-12">
+             <motion.span 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1, delay: 0.8 }}
+              className="block"
+             >
+               L&apos;Art du
+             </motion.span>
+             <motion.span 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 1.2, delay: 1 }}
+              className="italic text-rose block mt-2"
+             >
+               Sur-Mesure
+             </motion.span>
+           </h2>
+           <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.4, duration: 1 }}
+            className="flex flex-col gap-8 justify-center items-center mt-12"
+           >
+             <Link href="/configurateur" className="group">
+               <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="btn-gold !px-12 !py-5 shadow-[0_0_50px_rgba(188,124,124,0.3)] group-hover:shadow-[0_0_70px_rgba(188,124,124,0.5)] transition-all duration-700"
+               >
+                 DÉMARRER VOTRE CRÉATION
+               </motion.button>
              </Link>
              
-             {!user && (
-               <div className="flex gap-4 w-full max-w-xs sm:max-w-sm">
-                 <Link href="/connexion" className="flex-1">
-                    <button className="bg-white/5 border border-white/10 text-white tracking-[0.2em] uppercase text-[9px] py-4 px-4 hover:bg-white/10 transition-all w-full rounded-full">Connexion</button>
-                 </Link>
-                 <Link href="/inscription" className="flex-1">
-                    <button className="bg-rose text-white tracking-[0.2em] uppercase text-[9px] py-4 px-4 hover:bg-rose/80 transition-all w-full rounded-full">Inscription</button>
-                 </Link>
+             {!user ? (
+               <div className="flex gap-6 items-center">
+                 <Link href="/connexion" className="text-[10px] uppercase tracking-[0.3em] opacity-40 hover:opacity-100 hover:text-rose transition-all">Connexion</Link>
+                 <div className="w-[1px] h-4 bg-white/10" />
+                 <Link href="/inscription" className="text-[10px] uppercase tracking-[0.3em] opacity-40 hover:opacity-100 hover:text-rose transition-all">Créer un compte</Link>
                </div>
-             )}
-             {user && (
-               <Link href="/mon-compte" className="text-[10px] uppercase tracking-[0.4em] opacity-60 hover:opacity-100 hover:text-rose transition-all">
-                 👤 Bonjour, {user.nom?.split(' ')[0]} →
+             ) : (
+               <Link href="/mon-compte" className="text-[11px] uppercase tracking-[0.5em] opacity-50 hover:opacity-100 hover:text-rose transition-all flex items-center gap-3">
+                 <span className="w-8 h-[1px] bg-rose/40" />
+                 Bonjour, {user.nom?.split(' ')[0]}
+                 <span className="w-8 h-[1px] bg-rose/40" />
                </Link>
              )}
-
-             <a href="#collection" className="text-[9px] uppercase tracking-[0.4em] opacity-40 hover:opacity-100 transition-opacity mt-4 italic">Explorer la Collection</a>
            </motion.div>
         </div>
 
@@ -358,46 +415,67 @@ export default function MayaHome() {
               <motion.div 
                 key={p.id} 
                 variants={fadeInUp}
-                whileHover={{ y: -10 }}
-                className="glass-card group relative overflow-hidden transition-all duration-700 flex flex-col border border-white/5 hover:border-rose/20"
+                className="glass-card group relative flex flex-col h-full rounded-[40px] overflow-hidden"
               >
-                {/* Glowing Background on hover */}
-                <div className="absolute inset-0 bg-gradient-to-br from-rose/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-                
-                <div className="relative z-10 flex-1 flex flex-col">
-                   <div className="w-full h-64 sm:h-80 lg:h-96 relative overflow-hidden bg-black/40">
-                      {p.image_url ? (
-                        <motion.img 
-                          whileHover={{ scale: 1.05 }}
-                          src={p.image_url} alt={p.nom} 
-                          className="w-full h-full object-cover transition-transform duration-1000" 
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <div className="text-7xl sm:text-9xl font-display text-rose/5 italic opacity-20">M</div>
-                        </div>
-                      )}
-                      {/* Subtil dégradé en bas de l'image pour fondre avec la carte */}
-                      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#100B08] to-transparent pointer-events-none" />
-                   </div>
-                   
-                   <div className="px-6 sm:px-10 pb-6 sm:px-10 flex-1 flex flex-col -mt-10 relative z-20">
-                     <div className="text-[11px] uppercase tracking-[0.5em] text-rose font-bold mb-3 drop-shadow-md">{p.famille}</div>
-                     <h4 className="text-3xl sm:text-4xl font-display font-medium mb-3 tracking-tight group-hover:text-rose transition-colors duration-500 drop-shadow-md">{p.nom}</h4>
-                     <p className="text-[12px] text-white/50 uppercase tracking-widest italic mb-8 sm:mb-10 flex-1">Inspiré de {p.marque_inspiree}</p>
-                     
-                     <div className="flex justify-between items-center pt-6 border-t border-white/10">
-                        <div className="text-xl sm:text-2xl font-display text-[#D4AF37] font-bold">{p.prix_50ml?.toLocaleString()} F</div>
-                        <motion.button
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => addToCart(p)}
-                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-rose/30 flex items-center justify-center hover:bg-rose hover:text-white hover:border-rose transition-all text-xl sm:text-2xl shadow-lg shadow-black/50 bg-[#100B08]/80 backdrop-blur-sm"
-                          title="Ajouter au panier"
-                        >
-                          +
-                        </motion.button>
-                     </div>
-                   </div>
+                {/* Image Container with Hover Zoom */}
+                <div className="relative aspect-[3/4] overflow-hidden bg-[#100B08]">
+                  {p.image_url ? (
+                    <motion.img 
+                      initial={{ scale: 1.1 }}
+                      whileHover={{ scale: 1 }}
+                      transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
+                      src={p.image_url} 
+                      alt={p.nom} 
+                      className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-1000" 
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-rose/5 to-transparent">
+                      <span className="font-display text-[8rem] text-rose/5 italic">M</span>
+                    </div>
+                  )}
+                  
+                  {/* Luxury Overlays */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0D0800] via-transparent to-transparent opacity-60" />
+                  
+                  {/* Top Badge */}
+                  <div className="absolute top-6 left-6 overflow-hidden">
+                    <motion.span 
+                      initial={{ y: 30, opacity: 0 }}
+                      whileInView={{ y: 0, opacity: 1 }}
+                      viewport={{ once: true }}
+                      className="inline-block bg-white/5 backdrop-blur-md border border-white/10 px-4 py-1.5 rounded-full text-[9px] uppercase tracking-[0.3em] font-bold text-rose"
+                    >
+                      {p.famille}
+                    </motion.span>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-8 sm:p-10 flex flex-col flex-1 -mt-16 relative z-20">
+                  <h4 className="text-2xl sm:text-3xl font-display font-medium mb-2 tracking-tight group-hover:text-rose transition-colors duration-500 drop-shadow-2xl">
+                    {p.nom}
+                  </h4>
+                  <p className="text-[11px] text-white/30 uppercase tracking-[0.2em] font-light mb-8 line-clamp-1 italic">
+                    Note inspirée de {p.marque_inspiree}
+                  </p>
+                  
+                  <div className="mt-auto pt-6 flex justify-between items-center border-t border-white/[0.05]">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] uppercase tracking-widest text-white/20 mb-1">Prix Prestige</span>
+                      <span className="text-xl font-display text-[#D4AF37] font-bold">{p.prix_50ml?.toLocaleString()} F</span>
+                    </div>
+                    
+                    <motion.button
+                      whileHover={{ scale: 1.1, backgroundColor: "#BC7C7C", color: "#fff" }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => addToCart(p)}
+                      className="w-14 h-14 rounded-full border border-rose/30 flex items-center justify-center text-rose transition-all bg-white/5 backdrop-blur-sm group-hover:border-rose shadow-xl"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M12 5V19M5 12H19" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </motion.button>
+                  </div>
                 </div>
               </motion.div>
             ))
@@ -418,18 +496,22 @@ export default function MayaHome() {
                </div>
             </motion.div>
             
-            <motion.div {...fadeInUp} className="space-y-8 sm:space-y-12 pt-8 lg:pt-0">
-               <p className="text-rose text-[13px] uppercase tracking-[0.6em] font-bold">Le Savoir-Faire</p>
-               <h3 className="font-display text-4xl sm:text-5xl lg:text-6xl font-light leading-tight">Une Signature Olfactive <span className="italic text-rose">Unique au Togo</span></h3>
-               <p className="text-white/50 leading-[2] font-light text-lg sm:text-xl">
-                  Chaque flacon qui sort de notre bar est une œuvre d&apos;art. Nous marions les essences les plus rares pour créer un sillage qui raconte votre histoire. Plus qu&apos;un parfum, une identité.
-               </p>
-               <div className="pt-4">
-                  <Link href="/configurateur">
-                    <button className="btn-gold px-8 sm:px-12 py-4 sm:py-6 text-[10px]">PRENDRE RENDEZ-VOUS</button>
-                  </Link>
-               </div>
-            </motion.div>
+            <motion.div {...fadeInUp} className="space-y-10 pt-8 lg:pt-0">
+                <div className="flex items-center gap-4">
+                  <span className="w-12 h-[1px] bg-rose" />
+                  <p className="text-rose text-[11px] uppercase tracking-[0.8em] font-bold">Le Savoir-Faire</p>
+                </div>
+                <h3 className="font-display text-4xl sm:text-6xl lg:text-7xl font-light leading-[1.1]">Une Signature Olfactive <span className="italic text-rose block mt-2">Unique au Togo</span></h3>
+                <p className="text-white/40 leading-[2.2] font-light text-base sm:text-lg max-w-xl">
+                   Chaque flacon qui sort de notre bar est une œuvre d&apos;art. Nous marions les essences les plus rares pour créer un sillage qui raconte votre histoire. Plus qu&apos;un parfum, une identité.
+                </p>
+                <div className="pt-6 flex flex-col sm:flex-row gap-6">
+                   <Link href="/configurateur">
+                     <button className="btn-gold !px-10 !py-5">PRENDRE RENDEZ-VOUS</button>
+                   </Link>
+                   <button className="btn-outline">NOTRE HISTOIRE</button>
+                </div>
+             </motion.div>
          </div>
       </section>
 
@@ -466,19 +548,16 @@ export default function MayaHome() {
 
       <style jsx global>{`
         .glass-card {
-          background: rgba(18, 13, 10, 0.4);
-          backdrop-filter: blur(20px);
+          background: rgba(255, 255, 255, 0.02);
+          backdrop-filter: blur(40px);
           border: 1px solid rgba(255, 255, 255, 0.05);
-          border-radius: 30px;
-        }
-        @media (min-width: 640px) {
-          .glass-card { border-radius: 50px; }
+          transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
         }
         .btn-gold {
           background: #BC7C7C;
           color: white;
-          font-family: var(--font-display);
-          font-weight: 500;
+          font-family: var(--font-body);
+          font-weight: 600;
           letter-spacing: 0.3em;
           text-transform: uppercase;
           transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
@@ -490,12 +569,21 @@ export default function MayaHome() {
           background: white;
           color: black;
           transform: translateY(-5px);
-          box-shadow: 0 20px 60px rgba(188, 124, 124, 0.2);
+          box-shadow: 0 20px 60px rgba(188, 124, 124, 0.3);
         }
         .text-rose { color: #BC7C7C; }
         .bg-rose { background-color: #BC7C7C; }
         .border-rose { border-color: #BC7C7C; }
         .text-gold { color: #D4AF37; }
+        
+        @keyframes float {
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+          100% { transform: translateY(0px); }
+        }
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
       `}</style>
     </div>
   )

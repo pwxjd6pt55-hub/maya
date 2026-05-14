@@ -230,11 +230,46 @@ export default function AdminUltraPremium() {
       </motion.div>
 
       <style jsx global>{`
-        .glass-card { background: rgba(18, 13, 10, 0.4); backdrop-filter: blur(20px); border: 1px solid rgba(188, 124, 124, 0.1); border-radius: 40px; }
-        .luxury-input { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(188, 124, 124, 0.1); padding: 20px 24px; border-radius: 20px; outline: none; transition: all 0.5s ease; font-size: 14px; color: white; width: 100%; }
-        .luxury-input:focus { border-color: #BC7C7C; background: rgba(188, 124, 124, 0.05); }
-        .btn-gold { background: #BC7C7C; color: white; font-family: var(--font-display); font-weight: 500; letter-spacing: 0.3em; text-transform: uppercase; transition: all 0.5s ease; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1); }
-        .btn-gold:hover { background: #A66B6B; transform: translateY(-5px); box-shadow: 0 20px 40px rgba(188, 124, 124, 0.3); }
+        .glass-card { 
+          background: rgba(255, 255, 255, 0.02); 
+          backdrop-filter: blur(40px); 
+          border: 1px solid rgba(255, 255, 255, 0.05); 
+          border-radius: 40px; 
+          transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .luxury-input { 
+          background: rgba(255, 255, 255, 0.02); 
+          border: 1px solid rgba(255, 255, 255, 0.05); 
+          padding: 24px 28px; 
+          border-radius: 20px; 
+          outline: none; 
+          transition: all 0.5s ease; 
+          font-size: 14px; 
+          color: white; 
+          font-family: var(--font-body);
+        }
+        .luxury-input:focus { 
+          border-color: rgba(188, 124, 124, 0.4); 
+          background: rgba(188, 124, 124, 0.03); 
+          box-shadow: 0 0 30px rgba(188, 124, 124, 0.05);
+        }
+        .btn-gold { 
+          background: #BC7C7C; 
+          color: white; 
+          font-family: var(--font-body); 
+          font-weight: 600; 
+          letter-spacing: 0.3em; 
+          text-transform: uppercase; 
+          transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1); 
+          border-radius: 100px; 
+          border: 1px solid rgba(255, 255, 255, 0.1); 
+        }
+        .btn-gold:hover { 
+          background: white; 
+          color: black; 
+          transform: translateY(-5px); 
+          box-shadow: 0 20px 60px rgba(188, 124, 124, 0.3); 
+        }
       `}</style>
     </div>
   )
@@ -261,36 +296,40 @@ export default function AdminUltraPremium() {
       </div>
 
       {/* ── SIDEBAR NAVIGATION ── */}
-      <nav className={`fixed left-0 top-0 bottom-0 w-72 sm:w-80 bg-[#120D0A]/95 backdrop-blur-3xl border-r border-rose/10 z-[100] flex flex-col p-8 sm:p-12 transition-transform duration-500 lg:translate-x-0 ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <nav className={`fixed left-0 top-0 bottom-0 w-72 sm:w-80 bg-[#120D0A]/60 backdrop-blur-3xl border-r border-white/[0.03] z-[100] flex flex-col p-8 sm:p-12 transition-transform duration-700 ease-[0.22, 1, 0.36, 1] lg:translate-x-0 ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="mb-12 sm:mb-20 text-center mt-10 lg:mt-0">
           <Link href="/" className="group block">
-            <h1 className="font-display text-3xl sm:text-4xl tracking-tighter group-hover:text-rose transition-colors duration-500">MAYA <span className="italic font-light opacity-30 group-hover:opacity-100 transition-all">BAR</span></h1>
-            <p className="text-[8px] uppercase tracking-[0.5em] text-rose/40 mt-2 font-bold text-center">Luxury Management</p>
+            <h1 className="font-display text-3xl sm:text-4xl tracking-tighter transition-all duration-700">MAYA <span className="italic font-light opacity-10 group-hover:opacity-40 transition-all">ADMIN</span></h1>
+            <div className="flex justify-center items-center gap-2 mt-4">
+              <div className="w-6 h-[1px] bg-rose/40" />
+              <p className="text-[8px] uppercase tracking-[0.6em] text-rose font-bold">Luxe Dashboard</p>
+              <div className="w-6 h-[1px] bg-rose/40" />
+            </div>
           </Link>
         </div>
 
-        <div className="flex-1 space-y-3 sm:space-y-4">
+        <div className="flex-1 space-y-2 sm:space-y-3">
           {[
             { id: 'dashboard', label: 'Vue d\'ensemble', icon: '🍷' },
             { id: 'catalog', label: 'Collection Privée', icon: '🏺' },
             { id: 'essences', label: 'Laboratoire d\'Essences', icon: '🧪' },
-            { id: 'quiz', label: 'Gestion du Quiz', icon: '✨' },
+            { id: 'quiz', label: 'Diagnostic', icon: '✨' },
             { id: 'clients', label: 'Cercle Privé', icon: '💎' },
           ].map((item) => (
             <button
               key={item.id}
               onClick={() => { setTab(item.id as any); setMenuOpen(false); }}
-              className={`w-full group flex items-center gap-4 px-6 py-4 rounded-xl transition-all duration-500 ${tab === item.id ? 'bg-gradient-to-r from-rose to-rose-dark text-white shadow-xl shadow-rose/20 scale-105' : 'hover:bg-white/5 text-white/40'}`}
+              className={`w-full group flex items-center gap-5 px-6 py-4 rounded-2xl transition-all duration-700 ${tab === item.id ? 'bg-rose text-white shadow-[0_15px_40px_rgba(188,124,124,0.3)]' : 'hover:bg-white/[0.02] text-white/20 hover:text-white/50'}`}
             >
-              <span className={`text-lg transition-transform duration-500 ${tab === item.id ? 'scale-110' : 'group-hover:translate-x-1'}`}>{item.icon}</span>
-              <span className="text-[10px] uppercase tracking-[0.2em] font-bold">{item.label}</span>
+              <span className={`text-xl transition-transform duration-700 ${tab === item.id ? 'scale-110' : 'group-hover:translate-x-1'}`}>{item.icon}</span>
+              <span className="text-[10px] uppercase tracking-[0.3em] font-bold">{item.label}</span>
             </button>
           ))}
         </div>
 
-        <div className="pt-8 border-t border-rose/10">
-          <button onClick={() => window.location.href = '/'} className="w-full py-4 text-[9px] uppercase tracking-widest text-white/20 hover:text-rose transition-colors flex items-center justify-center gap-3">
-             <span>←</span> Retour au site
+        <div className="pt-8 border-t border-white/[0.03]">
+          <button onClick={() => window.location.href = '/'} className="w-full py-4 text-[9px] uppercase tracking-[0.5em] text-white/10 hover:text-rose transition-all flex items-center justify-center gap-4">
+             <span>←</span> Quitter l&apos;Atelier
           </button>
         </div>
       </nav>
@@ -300,12 +339,12 @@ export default function AdminUltraPremium() {
         
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mb-12 sm:mb-20">
           <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
-            <h2 className="text-[9px] uppercase tracking-[0.6em] text-rose font-bold mb-2 sm:mb-4">Système de Gestion</h2>
-            <h3 className="text-3xl sm:text-5xl font-display font-light leading-tight">Espace <span className="italic text-rose">Maya Bar 2026</span></h3>
+            <h2 className="text-[10px] uppercase tracking-[0.6em] text-rose font-bold mb-4">Système de Haute Gestion</h2>
+            <h3 className="text-4xl sm:text-6xl font-display font-light leading-tight">Maison <span className="italic text-rose">Maya Bar</span></h3>
           </motion.div>
-          <div className="px-6 py-3 bg-white/5 rounded-xl border border-white/10 flex items-center gap-3">
-            <div className="w-2 h-2 bg-rose rounded-full animate-ping" />
-            <span className="text-[9px] uppercase tracking-widest font-bold opacity-60">Status: Operational</span>
+          <div className="px-6 py-4 bg-white/[0.02] rounded-2xl border border-white/[0.05] flex items-center gap-4">
+            <div className="w-2.5 h-2.5 bg-rose rounded-full animate-pulse shadow-[0_0_15px_rgba(188,124,124,0.5)]" />
+            <span className="text-[9px] uppercase tracking-[0.3em] font-bold opacity-30">Status: Operational</span>
           </div>
         </header>
 
@@ -314,12 +353,12 @@ export default function AdminUltraPremium() {
           {/* ── DASHBOARD ── */}
           {tab === 'dashboard' && (
             <motion.div key="dashboard" variants={containerVariants} initial="hidden" animate="visible" className="space-y-16">
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-10">
                 {stats.map((s, i) => (
-                  <motion.div key={i} variants={itemVariants} className="glass-card p-6 sm:p-10 group hover:border-rose/30 transition-all">
-                    <div className={`text-2xl sm:text-3xl mb-4 sm:mb-6 ${s.color} bg-white/5 w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500`}>{s.icon}</div>
-                    <div className="text-xl sm:text-3xl font-display font-medium mb-1 tracking-tight">{s.value}</div>
-                    <div className="text-[8px] sm:text-[10px] uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/30 font-bold">{s.label}</div>
+                  <motion.div key={i} variants={itemVariants} className="glass-card p-10 group hover:border-rose/20">
+                    <div className={`text-3xl mb-8 ${s.color} bg-white/[0.03] w-16 h-16 rounded-[20px] border border-white/[0.05] flex items-center justify-center group-hover:scale-110 transition-transform duration-700`}>{s.icon}</div>
+                    <div className="text-3xl sm:text-4xl font-display font-medium mb-2 tracking-tight">{s.value}</div>
+                    <div className="text-[10px] uppercase tracking-[0.3em] text-white/20 font-bold">{s.label}</div>
                   </motion.div>
                 ))}
               </div>
@@ -574,11 +613,47 @@ export default function AdminUltraPremium() {
       </AnimatePresence>
 
       <style jsx global>{`
-        .glass-card { background: rgba(18, 13, 10, 0.4); backdrop-filter: blur(20px); border: 1px solid rgba(188, 124, 124, 0.1); border-radius: 40px; }
-        .luxury-input { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(188, 124, 124, 0.1); padding: 20px 24px; border-radius: 20px; outline: none; transition: all 0.5s ease; font-size: 14px; color: white; }
-        .luxury-input:focus { border-color: #BC7C7C; background: rgba(188, 124, 124, 0.05); }
-        .btn-gold { background: #BC7C7C; color: white; font-family: var(--font-display); font-weight: 500; letter-spacing: 0.3em; text-transform: uppercase; transition: all 0.5s ease; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1); }
-        .btn-gold:hover { background: #A66B6B; transform: translateY(-5px); box-shadow: 0 20px 40px rgba(188, 124, 124, 0.3); }
+        .glass-card { 
+          background: rgba(255, 255, 255, 0.02); 
+          backdrop-filter: blur(40px); 
+          border: 1px solid rgba(255, 255, 255, 0.05); 
+          border-radius: 40px; 
+          transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .luxury-input { 
+          background: rgba(255, 255, 255, 0.02); 
+          border: 1px solid rgba(255, 255, 255, 0.05); 
+          padding: 24px 28px; 
+          border-radius: 20px; 
+          outline: none; 
+          transition: all 0.5s ease; 
+          font-size: 14px; 
+          color: white; 
+          font-family: var(--font-body);
+          width: 100%;
+        }
+        .luxury-input:focus { 
+          border-color: rgba(188, 124, 124, 0.4); 
+          background: rgba(188, 124, 124, 0.03); 
+          box-shadow: 0 0 30px rgba(188, 124, 124, 0.05);
+        }
+        .btn-gold { 
+          background: #BC7C7C; 
+          color: white; 
+          font-family: var(--font-body); 
+          font-weight: 600; 
+          letter-spacing: 0.3em; 
+          text-transform: uppercase; 
+          transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1); 
+          border-radius: 100px; 
+          border: 1px solid rgba(255, 255, 255, 0.1); 
+        }
+        .btn-gold:hover { 
+          background: white; 
+          color: black; 
+          transform: translateY(-5px); 
+          box-shadow: 0 20px 60px rgba(188, 124, 124, 0.3); 
+        }
       `}</style>
     </div>
   )

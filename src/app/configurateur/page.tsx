@@ -141,23 +141,29 @@ export default function ConfiguratorElite() {
     <div className="min-h-screen bg-[#0D0800] text-[#F9F5F2] font-body flex flex-col selection:bg-rose/40">
       
       {/* ── HEADER NAVIGATION ── */}
-      <nav className="p-10 flex justify-between items-center border-b border-white/5 bg-[#0D0800]/80 backdrop-blur-md sticky top-0 z-[100]">
-        <Link href="/" className="font-display text-2xl tracking-tighter hover:text-rose transition-colors">
+      <nav className="px-6 py-8 sm:px-12 sm:py-10 flex justify-between items-center border-b border-white/[0.03] bg-[#0D0800]/60 backdrop-blur-xl sticky top-0 z-[100]">
+        <Link href="/" className="font-display text-2xl tracking-tighter hover:text-rose transition-all duration-700">
           MAYA <span className="italic font-light opacity-30">BAR</span>
         </Link>
-        <div className="flex gap-8 items-center">
-          <div className="hidden md:flex gap-4 items-center">
+        <div className="flex gap-10 items-center">
+          <div className="hidden md:flex gap-6 items-center">
             {[1, 2, 3, 4].map(s => (
-              <div key={s} className="flex items-center gap-2">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-bold border transition-all ${step >= s ? 'bg-rose border-rose text-white' : 'border-white/10 text-white/20'}`}>{s}</div>
-                {s < 4 && <div className={`w-8 h-[1px] ${step > s ? 'bg-rose' : 'bg-white/10'}`} />}
+              <div key={s} className="flex items-center gap-4">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold border transition-all duration-700 ${step >= s ? 'bg-rose border-rose text-white shadow-[0_0_20px_rgba(188,124,124,0.3)]' : 'border-white/10 text-white/20'}`}>
+                  0{s}
+                </div>
+                {s < 4 && <div className={`w-12 h-[1px] ${step > s ? 'bg-rose/40' : 'bg-white/5'}`} />}
               </div>
             ))}
           </div>
-          <Link href="/mon-compte" className="relative group">
-             <span className="text-[12px] uppercase tracking-widest font-bold opacity-40 group-hover:opacity-100 transition-opacity">Panier</span>
+          <Link href="/mon-compte" className="relative group flex items-center gap-3 ml-4">
+             <span className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-30 group-hover:opacity-100 transition-opacity">Panier</span>
              {cartCount > 0 && (
-               <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute -top-3 -right-3 w-5 h-5 bg-gold rounded-full text-[10px] flex items-center justify-center text-black font-bold shadow-lg">
+               <motion.span 
+                initial={{ scale: 0 }} 
+                animate={{ scale: 1 }} 
+                className="w-5 h-5 bg-rose rounded-full text-[9px] flex items-center justify-center text-white font-bold shadow-lg"
+               >
                  {cartCount}
                </motion.span>
              )}
@@ -169,31 +175,65 @@ export default function ConfiguratorElite() {
       <div className="flex-1 flex flex-col lg:flex-row">
         
         {/* ── LEFT: VISUALIZATION ── */}
-        <section className="flex-1 bg-[#120D0A] flex flex-col items-center justify-center p-12 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-rose/5 to-transparent pointer-events-none" />
+        <section className="flex-1 bg-[#0F0A07] flex flex-col items-center justify-center p-12 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-tr from-rose/[0.03] via-transparent to-transparent pointer-events-none" />
           
-          <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 1 }} className="relative z-10">
-            <div className="w-48 h-80 border-[3px] border-white/10 rounded-[40px] relative p-1">
-               <div className="w-full h-full rounded-[36px] overflow-hidden relative">
-                  <motion.div animate={{ height: `${step > 1 ? 80 : 0}%`, background: couleur }} className="absolute bottom-0 left-0 w-full transition-all duration-1000 opacity-60 blur-[1px]" />
-                  <div className="absolute top-0 left-1/4 w-[1px] h-full bg-white/20" />
-                  <div className="absolute top-0 left-1/3 w-[2px] h-full bg-white/10" />
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }} 
+            animate={{ scale: 1, opacity: 1 }} 
+            transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }} 
+            className="relative z-10"
+          >
+            {/* Elegant Bottle Visualization */}
+            <div className="w-56 h-96 border-[0.5px] border-white/10 rounded-[50px] relative p-1 shadow-[0_40px_100px_rgba(0,0,0,0.8)]">
+               <div className="w-full h-full rounded-[48px] overflow-hidden relative bg-[#0D0800]">
+                  {/* Liquid */}
+                  <motion.div 
+                    animate={{ 
+                      height: `${step > 1 ? 75 : 0}%`, 
+                      background: `linear-gradient(to top, ${couleur}, transparent)` 
+                    }} 
+                    className="absolute bottom-0 left-0 w-full transition-all duration-[2000ms] opacity-40 blur-[1px]" 
+                  />
+                  
+                  {/* Glass Reflections */}
+                  <div className="absolute top-0 left-1/4 w-[1px] h-full bg-white/10" />
+                  <div className="absolute top-0 left-1/3 w-[1px] h-full bg-white/[0.05]" />
+                  <div className="absolute top-0 right-1/4 w-[2px] h-full bg-white/[0.03]" />
+                  
+                  {/* Engraving */}
+                  <AnimatePresence>
+                    {gravure && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }} 
+                        animate={{ opacity: 1, y: 0 }} 
+                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-center px-6"
+                      >
+                        <p className="font-display text-[10px] uppercase italic text-rose/60 tracking-[0.4em] leading-loose drop-shadow-2xl">
+                          {gravure}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                </div>
-               <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-16 h-12 bg-gradient-to-b from-white/20 to-white/5 border border-white/10 rounded-xl" />
-               <AnimatePresence>
-                 {gravure && (
-                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-center px-4">
-                     <p className="font-display text-sm italic text-white/40 tracking-widest leading-tight">{gravure}</p>
-                   </motion.div>
-                 )}
-               </AnimatePresence>
+               
+               {/* Bottle Cap */}
+               <div className="absolute -top-14 left-1/2 -translate-x-1/2 w-20 h-14 bg-gradient-to-b from-white/10 to-[#0D0800] border border-white/10 rounded-2xl shadow-2xl" />
             </div>
-            <div className="w-48 h-8 bg-rose/5 blur-xl mt-12 rounded-full mx-auto" />
+            
+            {/* Ground Shadow */}
+            <div className="w-56 h-10 bg-black/80 blur-2xl mt-12 rounded-full mx-auto" />
           </motion.div>
 
-          <div className="absolute bottom-12 text-center">
-             <h4 className="text-[12px] uppercase tracking-[0.4em] text-rose font-bold mb-2">Signature Maya Bar</h4>
-             <p className="font-display text-2xl italic opacity-30">L&apos;excellence est un choix.</p>
+          <div className="absolute bottom-16 text-center space-y-4">
+             <motion.p 
+              animate={{ opacity: [0.2, 0.5, 0.2] }}
+              transition={{ duration: 4, repeat: Infinity }}
+              className="text-[9px] uppercase tracking-[0.6em] text-rose font-bold"
+             >
+               Signature Maya Bar — Lomé
+             </motion.p>
+             <h4 className="font-display text-3xl italic opacity-10">L&apos;art de l&apos;exception.</h4>
           </div>
         </section>
 
@@ -336,8 +376,17 @@ export default function ConfiguratorElite() {
                        <div className="text-[12px] uppercase tracking-widest opacity-50">{ml}ml</div>
                     </div>
                  </div>
-                 <button onClick={addToCart} disabled={adding} className="btn-gold w-full py-6 text-xl tracking-tighter italic disabled:opacity-50">{adding ? 'MISE EN FLACON...' : 'AJOUTER AU PANIER'}</button>
-                 <button onClick={handleBack} className="w-full text-[12px] uppercase tracking-widest text-white/30 font-bold hover:text-white transition-colors">Modifier la création</button>
+                  <button 
+                    onClick={addToCart} 
+                    disabled={adding} 
+                    className="btn-gold w-full py-6 text-[11px] font-bold tracking-[0.4em] disabled:opacity-50 relative group"
+                  >
+                    <span className="relative z-10">{adding ? 'MISE EN FLACON...' : 'AJOUTER AU PANIER'}</span>
+                    <div className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+                  </button>
+                  <button onClick={handleBack} className="w-full text-[9px] uppercase tracking-[0.5em] text-white/20 font-bold hover:text-rose transition-colors">
+                    Modifier la création
+                  </button>
               </motion.div>
             )}
 
@@ -356,12 +405,33 @@ export default function ConfiguratorElite() {
       </AnimatePresence>
 
       <style jsx global>{`
-        .glass-card { background: rgba(18, 13, 10, 0.4); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 40px; }
-        .btn-gold { background: #BC7C7C; color: white; font-family: var(--font-display); font-weight: 500; letter-spacing: 0.4em; text-transform: uppercase; transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1); border-radius: 100px; border: 1px solid rgba(255, 255, 255, 0.1); }
-        .btn-gold:hover { background: white; color: black; transform: translateY(-8px); box-shadow: 0 30px 60px rgba(188, 124, 124, 0.2); }
-        .custom-scrollbar::-webkit-scrollbar { width: 2px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #BC7C7C; }
+        .glass-card { 
+          background: rgba(255, 255, 255, 0.02); 
+          backdrop-filter: blur(40px); 
+          border: 1px solid rgba(255, 255, 255, 0.05); 
+          border-radius: 40px; 
+          transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .btn-gold { 
+          background: #BC7C7C; 
+          color: white; 
+          font-family: var(--font-body); 
+          font-weight: 600; 
+          letter-spacing: 0.3em; 
+          text-transform: uppercase; 
+          transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1); 
+          border-radius: 100px; 
+          border: 1px solid rgba(255, 255, 255, 0.1); 
+        }
+        .btn-gold:hover { 
+          background: white; 
+          color: black; 
+          transform: translateY(-5px); 
+          box-shadow: 0 20px 60px rgba(188, 124, 124, 0.3); 
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.01); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(188, 124, 124, 0.4); border-radius: 10px; }
       `}</style>
     </div>
   )

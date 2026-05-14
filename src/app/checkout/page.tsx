@@ -139,19 +139,35 @@ export default function CheckoutElite() {
   }
 
   if (orderComplete) return (
-    <div className="min-h-screen bg-[#0D0800] flex items-center justify-center p-8 text-center">
-       <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="glass-card p-16 max-w-xl space-y-8">
-          <div className="w-24 h-24 bg-rose rounded-full flex items-center justify-center text-4xl mx-auto shadow-2xl shadow-rose/20">✨</div>
-          <h2 className="text-4xl font-display italic">Commande Confirmée</h2>
-          <p className="text-white/40 text-sm font-light">Merci <span className="text-rose font-bold">{formData.nom}</span>, votre commande est enregistrée.</p>
-          <div className="pt-8 space-y-4">
+    <div className="min-h-screen bg-[#0D0800] flex items-center justify-center p-8 text-center relative overflow-hidden">
+       {/* Animated Background Elements */}
+       <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(188,124,124,0.05),transparent_50%)]" />
+       
+       <motion.div 
+        initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+        animate={{ opacity: 1, scale: 1, y: 0 }} 
+        className="glass-card p-12 sm:p-20 max-w-2xl space-y-10 relative z-10"
+       >
+          <div className="w-24 h-24 bg-rose/10 border border-rose/20 rounded-full flex items-center justify-center text-4xl mx-auto shadow-[0_0_50px_rgba(188,124,124,0.2)]">
+            <span className="animate-pulse">✨</span>
+          </div>
+          <div className="space-y-4">
+            <h2 className="text-4xl sm:text-5xl font-display italic">Commande Confirmée</h2>
+            <p className="text-white/30 text-sm font-light uppercase tracking-[0.2em]">
+              Merci <span className="text-rose font-bold">{formData.nom?.split(' ')[0]}</span>, votre création est réservée.
+            </p>
+          </div>
+          
+          <div className="pt-10 space-y-4">
              <button 
                onClick={() => window.open(`https://wa.me/22870993597?text=${encodeURIComponent('Bonjour Maya Bar, je souhaite confirmer ma commande #' + orderRef)}`, '_blank')}
-               className="w-full py-5 bg-[#25D366] text-white rounded-full font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:scale-105 transition-all"
+               className="btn-gold w-full !py-6 !bg-[#25D366] !border-[#25D366] hover:!bg-white hover:!text-[#25D366]"
              >
-                <span>📱</span> CONFIRMER SUR WHATSAPP
+                CONFIRMER SUR WHATSAPP
              </button>
-             <Link href="/mon-compte" className="block text-[10px] uppercase tracking-widest text-white/20 hover:text-white transition-colors mt-6">Voir mon historique</Link>
+             <Link href="/mon-compte" className="block text-[10px] uppercase tracking-[0.4em] text-white/20 hover:text-rose transition-all mt-10 font-bold">
+               Consulter mon historique
+             </Link>
           </div>
        </motion.div>
     </div>
@@ -159,9 +175,9 @@ export default function CheckoutElite() {
 
   return (
     <div className="min-h-screen bg-[#0D0800] text-[#F9F5F2] font-body flex flex-col selection:bg-rose/40">
-      <nav className="p-10 border-b border-white/5 flex justify-between items-center">
-         <Link href="/" className="font-display text-2xl tracking-tighter">MAYA <span className="italic font-light opacity-30">BAR</span></Link>
-         <Link href="/configurateur" className="text-[10px] uppercase tracking-widest opacity-30 hover:opacity-100 transition-opacity">Retour au configurateur</Link>
+      <nav className="sticky top-0 z-50 bg-[#0D0800]/60 backdrop-blur-xl border-b border-white/[0.03] px-6 py-5 sm:px-12 sm:py-8 flex justify-between items-center">
+         <Link href="/" className="font-display text-2xl tracking-tighter hover:text-rose transition-all duration-700">MAYA <span className="italic font-light opacity-30">BAR</span></Link>
+         <Link href="/configurateur" className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-30 hover:opacity-100 hover:text-rose transition-all px-4 py-2">Retour au configurateur</Link>
       </nav>
 
       <main className="flex-1 max-w-[1200px] mx-auto w-full px-8 py-20 grid grid-cols-1 lg:grid-cols-2 gap-20">
@@ -245,13 +261,48 @@ export default function CheckoutElite() {
       </main>
 
       <style jsx global>{`
-        .glass-card { background: rgba(18, 13, 10, 0.4); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 40px; }
-        .luxury-input { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(188, 124, 124, 0.1); padding: 20px 24px; border-radius: 20px; outline: none; transition: all 0.5s ease; font-size: 14px; color: white; }
-        .luxury-input:focus { border-color: #BC7C7C; background: rgba(188, 124, 124, 0.05); }
-        .btn-gold { background: #BC7C7C; color: white; font-family: var(--font-display); font-weight: 500; letter-spacing: 0.3em; text-transform: uppercase; transition: all 0.5s ease; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1); }
-        .btn-gold:hover { background: #A66B6B; transform: translateY(-5px); box-shadow: 0 20px 40px rgba(188, 124, 124, 0.3); }
-        .custom-scrollbar::-webkit-scrollbar { width: 2px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #BC7C7C; }
+        .glass-card { 
+          background: rgba(255, 255, 255, 0.02); 
+          backdrop-filter: blur(40px); 
+          border: 1px solid rgba(255, 255, 255, 0.05); 
+          border-radius: 40px; 
+          transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .luxury-input { 
+          background: rgba(255, 255, 255, 0.02); 
+          border: 1px solid rgba(255, 255, 255, 0.05); 
+          padding: 24px 28px; 
+          border-radius: 20px; 
+          outline: none; 
+          transition: all 0.5s ease; 
+          font-size: 14px; 
+          color: white; 
+          font-family: var(--font-body);
+        }
+        .luxury-input:focus { 
+          border-color: rgba(188, 124, 124, 0.4); 
+          background: rgba(188, 124, 124, 0.03); 
+          box-shadow: 0 0 30px rgba(188, 124, 124, 0.05);
+        }
+        .btn-gold { 
+          background: #BC7C7C; 
+          color: white; 
+          font-family: var(--font-body); 
+          font-weight: 600; 
+          letter-spacing: 0.3em; 
+          text-transform: uppercase; 
+          transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1); 
+          border-radius: 100px; 
+          border: 1px solid rgba(255, 255, 255, 0.1); 
+        }
+        .btn-gold:hover { 
+          background: white; 
+          color: black; 
+          transform: translateY(-5px); 
+          box-shadow: 0 20px 60px rgba(188, 124, 124, 0.3); 
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(188, 124, 124, 0.4); border-radius: 10px; }
       `}</style>
     </div>
   )
